@@ -37,7 +37,7 @@ export default async function DashboardPage() {
           <div className="flex h-16 justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">📘 Booksy</h1>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{businessResult.data.name}</span>
+              <span className="text-sm text-gray-600">{(businessResult as any).data?.name}</span>
               <Link
                 href="/transactions"
                 className="text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -49,6 +49,12 @@ export default async function DashboardPage() {
                 className="text-sm font-medium text-gray-600 hover:text-gray-900"
               >
                 Ledger
+              </Link>
+              <Link
+                href="/currency-converter"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Currency Converter
               </Link>
               <Link
                 href="/ai-assistant"
