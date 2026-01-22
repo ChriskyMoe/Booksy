@@ -36,7 +36,14 @@ export default function SignupPage() {
     })
 
     if (error) {
-      setError(error.message)
+      // Handle rate limiting errors with a more user-friendly message
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        setError(
+          'Too many signup attempts. Please wait a few minutes before trying again, or try using a different email address.'
+        )
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
     } else {
       router.push('/setup')

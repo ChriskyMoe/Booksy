@@ -47,6 +47,18 @@ export default async function AIAssistantPage() {
               >
                 Ledger
               </Link>
+              <Link
+                href="/currency-converter"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Currency Converter
+              </Link>
+              <Link
+                href="/ai-assistant"
+                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              >
+                AI Assistant
+              </Link>
               <LogoutButton />
             </div>
           </div>
