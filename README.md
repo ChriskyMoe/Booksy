@@ -1,429 +1,306 @@
-# 📘 Booksy
-
-<div align="center">
+📘 Booksy
 
-**AI-Powered Expense & Income Tracking for Small Businesses**
+AI-Powered Expense & Income Tracking for Small Businesses
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.1-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase)](https://supabase.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38bdf8?logo=tailwind-css)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Booksy is a Next.js application that helps small businesses record income and expenses effortlessly and understand their financial health through AI-powered insights — without requiring accounting expertise.
 
-*Track income and expenses effortlessly with AI-powered financial insights — no accounting expertise required.*
+🧭 Overview
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
+Small business owners often struggle with manual bookkeeping, poor financial visibility, and complex accounting tools designed for professionals rather than operators.
 
-</div>
+Booksy focuses on:
 
----
+Simple bookkeeping
 
-## 📖 About
+Clear financial visibility
 
-**Booksy** is a modern bookkeeping application designed specifically for small businesses. It combines simple transaction tracking with AI-powered financial insights, making it easy for business owners to understand their finances without needing accounting knowledge.
+AI explanations instead of accounting jargon
 
-### Why Booksy?
+🎯 MVP Goal
 
-- 🎯 **Simple & Intuitive**: No complex accounting jargon, just clear financial insights
-- 🤖 **AI-Powered**: Ask questions in plain language and get actionable financial advice
-- 💰 **Multi-Currency**: Track transactions in multiple currencies with automatic conversion
-- 🔒 **Secure**: Built with Supabase Auth and Row Level Security
-- 📊 **Comprehensive**: Dashboard, ledger, and detailed financial analytics
+Deliver a reliable bookkeeping system with AI-powered summaries and insights to validate whether automated financial analysis provides real value to small businesses.
 
----
+👥 Target Users
+Primary Users
 
-## ✨ Features
+Small business owners (shops, freelancers, service providers)
 
-### 🔐 Authentication & Business Setup
-- Secure email/password authentication with Supabase Auth
-- Business profile configuration (name, type, currency, fiscal year)
-- Automatic default category creation
+Limited accounting knowledge
 
-### 💸 Income & Expense Tracking
-- Record transactions with detailed information:
-  - Amount, category, date, payment method
-  - Optional: client/vendor, currency, notes
-- Full CRUD operations for transactions
-- Multi-currency support with automatic base currency conversion
+Need quick answers to financial questions
 
-### 🗂️ Category Management
-- Pre-configured default categories:
-  - Income: Sales
-  - Expenses: Cost of Goods Sold, Rent, Utilities, Marketing, Transportation
-- Create custom categories for income and expenses
-- Automatic income vs expense classification
+Web-first users
 
-### 📊 Dashboard & Analytics
-- **Financial Overview**:
-  - Total income and expenses
-  - Net profit calculation
-  - Cash balance tracking
-- **Expense Breakdown**: Visual category-wise expense analysis
-- **Recent Transactions**: Quick view of latest entries
+Secondary Users
 
-### 📒 Ledger & Journal View
-- Chronological transaction listing
-- Advanced filtering:
-  - By category
-  - By date range
-  - By payment method
-- Export-ready data structure
+Business managers
 
-### 🤖 AI Financial Assistant
-- **Natural Language Queries**: Ask questions like:
-  - "Why was my profit lower this month?"
-  - "How much did I spend on marketing?"
-  - "Can I afford new equipment this month?"
-- **Financial Insights**: Get AI-powered analysis of your financial health
-- **Actionable Recommendations**: Receive clear, jargon-free advice
+Early-stage startup founders
 
-### 🌍 Multi-Currency Support
-- Record transactions in multiple currencies
-- Automatic conversion to base currency
-- Exchange rate storage and management
+✨ Features
+Core Functionality (MVP)
 
----
+Business Authentication & Profile
 
-## 🛠️ Tech Stack
+Secure authentication with Supabase Auth
 
-| Category | Technology |
-|----------|-----------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
-| **Backend** | Next.js Server Actions & API Routes |
-| **Authentication** | [Supabase Auth](https://supabase.com/auth) |
-| **Database** | [Supabase PostgreSQL](https://supabase.com/database) |
-| **AI** | [OpenAI GPT-4o-mini](https://openai.com/) |
-| **Deployment** | [Vercel](https://vercel.com/) (recommended) |
+Business profile setup (name, type, base currency, fiscal year)
 
----
+Income & Expense Tracking
 
-## 📋 Prerequisites
+Record transactions with:
 
-Before you begin, ensure you have:
+Amount
 
-- **Node.js** 18.0 or higher
-- **npm** or **yarn** package manager
-- A **Supabase** account ([sign up free](https://supabase.com))
-- An **OpenAI API key** (optional, for AI features)
+Category
 
----
+Date
 
-## 🚀 Quick Start
+Payment method
 
-### 1. Clone the Repository
+Optional fields: notes, client/vendor, currency
 
-```bash
-git clone https://github.com/yourusername/booksy.git
-cd booksy
-```
+Accounting Categories
 
-### 2. Install Dependencies
+Default income and expense categories
 
-```bash
-npm install
-```
+Support for custom categories
 
-### 3. Set Up Supabase
+Income vs expense classification
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Navigate to **SQL Editor** in your Supabase dashboard
-3. Copy and run the SQL schema from `supabase/schema.sql`
-4. Go to **Settings** > **API** and copy:
-   - Project URL
-   - `anon` public key
-   - `service_role` key (keep this secret!)
+Dashboard
 
-### 4. Configure Environment Variables
+Total income
 
-Create a `.env.local` file in the root directory:
+Total expenses
 
-```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+Net profit
 
-# OpenAI Configuration (optional - for AI features)
-OPENAI_API_KEY=sk-your-openai-api-key-here
+Cash balance
 
-# App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+Expense breakdown by category
 
-> ⚠️ **Important**: Never commit `.env.local` to version control. It's already in `.gitignore`.
+Ledger View
 
-### 5. Run the Development Server
+Chronological transaction ledger
 
-```bash
-npm run dev
-```
+Monthly and yearly views
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Filters by category, date range, and payment method
 
-### 6. First Time Setup
+🤖 AI-Powered Features
 
-1. **Sign Up**: Create a new account
-2. **Set Up Business**: 
-   - Enter business name
-   - Select business type (optional)
-   - Choose base currency
-   - Set fiscal year start date
-3. **Start Tracking**: Add your first transaction!
+AI Financial Assistant
 
----
+Ask questions in plain language:
 
-## 📚 Documentation
+“Why was my profit lower this month?”
 
-### Project Structure
+“How much did I spend on marketing last quarter?”
 
-```
-booksy/
-├── app/                    # Next.js App Router pages
-│   ├── dashboard/         # Main dashboard
-│   ├── transactions/      # Transaction management
-│   ├── ledger/            # Ledger view with filters
-│   ├── ai-assistant/      # AI financial assistant
-│   └── ...
-├── components/            # React components
-├── lib/
-│   ├── actions/          # Server actions
-│   ├── ai/              # AI integration
-│   └── supabase/        # Supabase clients
-├── supabase/
-│   └── schema.sql       # Database schema
-└── types/               # TypeScript types
-```
+“Can I afford new equipment this month?”
 
-### Database Schema
+Provides:
 
-The application uses the following main tables:
+Financial explanations
 
-- **`businesses`**: Business profiles and settings
-- **`categories`**: Transaction categories (income/expense)
-- **`transactions`**: Income and expense records
-- **`exchange_rates`**: Currency exchange rate storage
+Trend analysis
 
-All tables are protected with **Row Level Security (RLS)** policies ensuring users can only access their own data.
+Actionable recommendations
 
-See [`supabase/schema.sql`](./supabase/schema.sql) for the complete schema.
+Financial Analysis & Summaries
 
-### API & Server Actions
+Monthly and quarterly summaries
 
-The application uses Next.js Server Actions for data operations:
+Profit and loss overview
 
-- `lib/actions/business.ts` - Business profile management
-- `lib/actions/transactions.ts` - Transaction CRUD operations
-- `lib/actions/categories.ts` - Category management
-- `lib/actions/dashboard.ts` - Dashboard data aggregation
-- `lib/ai/insights.ts` - AI-powered financial insights
+Expense highlights
 
-### Environment Variables
+Rule-based analysis (MVP)
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | ✅ Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | ✅ Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | ✅ Yes |
-| `OPENAI_API_KEY` | OpenAI API key for AI features | ❌ Optional |
-| `NEXT_PUBLIC_APP_URL` | Application URL | ❌ Optional |
+Advanced forecasting planned for future versions
 
----
+Multi-Currency Support
 
-## 🎯 Usage Guide
+Record transactions in multiple currencies
 
-### Adding Transactions
+Automatic conversion to base currency
 
-1. Navigate to **Transactions** page
-2. Click **+ Add Transaction**
-3. Fill in the required fields:
-   - Category (income or expense)
-   - Amount
-   - Date
-   - Payment method
-4. Optionally add client/vendor and notes
-5. Click **Add Transaction**
+Stores original and converted values
 
-### Viewing Financial Overview
+🛠 Tech Stack
 
-- **Dashboard**: See total income, expenses, profit, and cash balance
-- **Expense Breakdown**: Visual representation of expenses by category
-- **Recent Transactions**: Latest transaction entries
+Framework: Next.js 16 (App Router)
 
-### Using the AI Assistant
+Styling: Tailwind CSS
 
-1. Go to **AI Assistant** page
-2. Ask questions in plain language:
-   - "Why was my profit lower this month?"
-   - "What are my biggest expenses?"
-   - "Can I afford to buy new equipment?"
-3. Or click quick question templates
-4. Get AI-powered insights and recommendations
+Backend: Next.js API Routes & Server Actions
 
-### Filtering Transactions
+Authentication: Supabase Auth
 
-1. Navigate to **Ledger** page
-2. Use filters:
-   - **Category**: Filter by transaction category
-   - **Date Range**: Select start and end dates
-   - **Payment Method**: Filter by cash, card, transfer, etc.
-3. Click **Clear Filters** to reset
+Database: Supabase (PostgreSQL)
 
----
+AI: OpenAI (GPT-4o-mini)
 
-## 🔐 Security
+Deployment: Vercel (recommended)
 
-- ✅ **Row Level Security (RLS)**: All database tables protected with RLS policies
-- ✅ **Authentication**: Secure authentication handled by Supabase Auth
-- ✅ **Data Isolation**: Users can only access their own business data
-- ✅ **Server-Side Validation**: All data operations validated server-side
-- ✅ **Environment Variables**: Sensitive keys stored securely
+🏗 System Architecture
+High-Level Architecture
 
----
+Frontend: Next.js + Tailwind CSS
 
-## 🚢 Deployment
+Backend: API routes + AI service
 
-### Deploy to Vercel (Recommended)
+Database: Supabase (PostgreSQL)
 
-1. **Push to GitHub**:
-   ```bash
-   git push origin main
-   ```
+Page Structure
 
-2. **Import to Vercel**:
-   - Go to [vercel.com](https://vercel.com)
-   - Click **New Project**
-   - Import your GitHub repository
+Public
 
-3. **Configure Environment Variables**:
-   - Add all variables from `.env.local` in Vercel dashboard
-   - Go to **Settings** > **Environment Variables**
+Landing page
 
-4. **Deploy**:
-   - Click **Deploy**
-   - Your app will be live in minutes!
+Login / Signup
 
-### Other Deployment Options
+Authenticated
 
-- **Netlify**: Similar process to Vercel
-- **Railway**: Supports PostgreSQL and Next.js
-- **Self-hosted**: Deploy on your own server with Docker
+Dashboard
 
----
+Transactions
 
-## 🧪 Development
+Ledger
 
-### Available Scripts
+AI Assistant
 
-```bash
-# Development server
-npm run dev
+Settings
 
-# Production build
-npm run build
+🧱 Database Schema
 
-# Start production server
-npm start
+Main tables include:
 
-# Lint code
-npm run lint
-```
+businesses – Business profiles
 
-### Code Style
+categories – Income and expense categories
 
-- TypeScript for type safety
-- ESLint for code quality
-- Tailwind CSS for styling
-- Server Actions for data mutations
+transactions – Income and expense records
 
----
+exchange_rates – Currency exchange rates
 
-## 📝 Notes & Limitations
+ai_insights – Generated financial summaries
 
-### Current Limitations
+See supabase/schema.sql for the complete schema with Row Level Security (RLS) policies.
 
-- **Exchange Rates**: Uses placeholder rates. For production, integrate with a real API:
-  - [exchangerate-api.com](https://www.exchangerate-api.com/)
-  - [fixer.io](https://fixer.io/)
-  - [currencylayer.com](https://currencylayer.com/)
+🔌 API Endpoints (MVP)
+  POST   /auth/signup
+  POST   /auth/login
+  GET    /dashboard
+  POST   /transactions
+  GET    /transactions
+  GET    /ledger
+  POST   /ai/query
+  GET    /ai/summary
 
-- **AI Features**: Requires OpenAI API key. Without it, AI features will display an error message.
+⚙️ Setup Instructions
+Prerequisites
 
-- **Email Verification**: Email confirmation is disabled by default for development. Enable in Supabase dashboard for production.
+Node.js 18+
 
-### Future Enhancements
+Supabase account
 
-- [ ] Real-time exchange rate integration
-- [ ] CSV/PDF export functionality
-- [ ] Financial reports generation
-- [ ] Email notifications
-- [ ] Mobile app (React Native)
-- [ ] Recurring transactions
-- [ ] Invoice generation
+OpenAI API key
 
----
+Installation
 
-## 🤝 Contributing
+     npm install
+     npm run dev
 
-Contributions are welcome! This is an MVP project, and we'd love your help to make it better.
+Environment Variables
 
-### How to Contribute
+      NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+      NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+      SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+  
+      OPENAI_API_KEY=your_openai_api_key
+      NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-1. **Fork the repository**
-2. **Create a feature branch**:
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-4. **Commit your changes**:
-   ```bash
-   git commit -m 'Add some amazing feature'
-   ```
-5. **Push to the branch**:
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-6. **Open a Pull Request**
+🚀 Usage Flow
 
-### Contribution Guidelines
+Sign up and log in
 
-- Follow the existing code style
-- Write clear commit messages
-- Add comments for complex logic
-- Test your changes thoroughly
-- Update documentation if needed
+Set up a business profile
 
----
+Add income and expense transactions
 
-## 📄 License
+View dashboard insights
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Ask financial questions using AI
 
----
+Review ledger and summaries
 
-## 🙏 Acknowledgments
+🔐 Security
 
-- [Next.js](https://nextjs.org/) for the amazing framework
-- [Supabase](https://supabase.com) for backend infrastructure
-- [OpenAI](https://openai.com/) for AI capabilities
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-- All contributors and users of Booksy
+Row Level Security (RLS) enabled on all tables
 
----
+Users can only access their own business data
 
-## 📞 Support
+Authentication handled by Supabase Auth
 
-- 📖 **Documentation**: See [SETUP.md](./SETUP.md) for detailed setup instructions
-- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/booksy/issues)
-- 💬 **Discussions**: Join discussions on [GitHub Discussions](https://github.com/yourusername/booksy/discussions)
+📊 Success Metrics
+Quantitative
 
----
+Number of businesses onboarded
 
-<div align="center">
+Weekly active transaction entry rate
 
-**Built with ❤️ for small businesses**
+AI assistant usage frequency
 
-[⭐ Star this repo](https://github.com/yourusername/booksy) if you find it helpful!
+Qualitative
 
-</div>
+User feedback on clarity of insights
+
+Most common AI questions
+
+⚠️ Risks & Assumptions
+Assumptions
+
+Small businesses prefer simple explanations over accounting detail
+
+AI-generated insights add measurable value
+
+Risks
+
+Users may not trust AI insights
+
+Poor data quality reduces accuracy
+
+Mitigation
+
+Transparent calculations
+
+Clear, explainable recommendations
+
+🚢 Deployment
+Vercel
+
+Push repository to GitHub
+
+Import project into Vercel
+
+Configure environment variables
+
+Deploy
+
+📝 Notes
+
+Exchange rates are placeholders; production should integrate a live API
+
+AI features require a valid OpenAI API key
+
+Default categories are created during business setup
+
+🤝 Contributing
+
+This is an MVP-stage project. Contributions and improvements are welcome.
+
+📄 License
+
+MIT
