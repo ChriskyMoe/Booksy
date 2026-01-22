@@ -24,7 +24,14 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      // Handle rate limiting errors with a more user-friendly message
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        setError(
+          'Too many login attempts. Please wait a few minutes before trying again.'
+        )
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
     } else {
       router.push('/dashboard')
