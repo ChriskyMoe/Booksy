@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBusiness } from '@/lib/actions/business'
-import AIAssistant from '@/components/AIAssistant'
+import AIFinancialAnalysis from '@/components/AIFinancialAnalysis'
 import LogoutButton from '@/components/LogoutButton'
 import Link from 'next/link'
 
@@ -41,21 +41,20 @@ export default async function AIAssistantPage() {
               >
                 Transactions
               </Link>
+              <Link
+                href="/ledger"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Ledger
+              </Link>
               <LogoutButton />
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">AI Financial Assistant</h2>
-          <p className="mt-2 text-gray-600">
-            Ask questions about your finances in plain language
-          </p>
-        </div>
-
-        <AIAssistant />
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <AIFinancialAnalysis />
       </main>
     </div>
   )

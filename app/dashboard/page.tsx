@@ -54,7 +54,7 @@ export default async function DashboardPage() {
                 href="/ai-assistant"
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
               >
-                AI Assistant
+                AI Financial Analysis
               </Link>
               <LogoutButton />
             </div>
