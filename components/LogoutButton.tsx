@@ -2,8 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { LogOut } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-export default function LogoutButton() {
+interface LogoutButtonProps {
+  variant?: 'default' | 'ghost' | 'outline'
+  className?: string
+}
+
+export default function LogoutButton({ variant = 'ghost', className }: LogoutButtonProps) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -14,11 +22,13 @@ export default function LogoutButton() {
   }
 
   return (
-    <button
+    <Button
       onClick={handleLogout}
-      className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+      variant={variant}
+      className={cn("w-full justify-start gap-2", className)}
     >
+      <LogOut className="h-4 w-4" />
       Sign Out
-    </button>
+    </Button>
   )
 }

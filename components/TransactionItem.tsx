@@ -4,6 +4,8 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { deleteTransaction } from '@/lib/actions/transactions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 interface TransactionItemProps {
   transaction: {
@@ -33,42 +35,45 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
 
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
         {formatDate(transaction.transaction_date)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <span
-          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        <Badge
+          variant={transaction.category?.type === 'income' ? 'default' : 'destructive'}
+          className={
             transaction.category?.type === 'income'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
-          }`}
+              ? 'bg-success/10 text-success hover:bg-success/20'
+              : ''
+          }
         >
           {transaction.category?.name || 'Uncategorized'}
-        </span>
+        </Badge>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
         {transaction.client_vendor || '-'}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground capitalize">
         {transaction.payment_method}
       </td>
       <td
         className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${
-          transaction.category?.type === 'income' ? 'text-green-600' : 'text-red-600'
+          transaction.category?.type === 'income' ? 'text-success' : 'text-destructive'
         }`}
       >
         {transaction.category?.type === 'income' ? '+' : '-'}
         {formatCurrency(transaction.base_amount, transaction.currency)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        <button
+        <Button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
         >
           Delete
-        </button>
+        </Button>
       </td>
     </tr>
   )
