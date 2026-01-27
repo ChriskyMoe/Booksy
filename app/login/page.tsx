@@ -1,46 +1,44 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react' // Import the icon
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
-      // Handle rate limiting errors with a more user-friendly message
-      if (error.message.includes('rate limit') || error.message.includes('429')) {
-        setError(
-          'Too many login attempts. Please wait a few minutes before trying again.'
-        )
-      } else {
-        setError(error.message)
-      }
-      setLoading(false)
-    } else {
-      router.push('/dashboard')
-      router.refresh()
+      const message =
+        error.message.includes("rate limit") || error.message.includes("429")
+          ? "Too many login attempts. Please wait a few minutes before trying again."
+          : error.message;
+      setError(message);
+      setLoading(false);
+      return;
     }
-  }
+
+    router.push("/dashboard");
+    router.refresh();
+  };
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -67,7 +65,9 @@ export default function LoginPage() {
             </div>
             <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
               <div className="text-2xl font-semibold">Fast Access</div>
-              <p className="text-sm text-blue-100">Instant financial overview</p>
+              <p className="text-sm text-blue-100">
+                Instant financial overview
+              </p>
             </div>
             <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
               <div className="text-2xl font-semibold">Smart Insights</div>
@@ -77,8 +77,13 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center bg-background px-6 py-12 sm:px-10"> {/* Added relative positioning */}
-        <Link href="/" className="absolute left-6 top-6 text-muted-foreground hover:text-foreground">
+      <div className="relative flex items-center justify-center bg-background px-6 py-12 sm:px-10">
+        {" "}
+        {/* Added relative positioning */}
+        <Link
+          href="/"
+          className="absolute left-6 top-6 text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-6 w-6" />
         </Link>
         <div className="w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-8 shadow-elevated">
@@ -121,17 +126,26 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="flex items-center justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-primary hover:text-primary/80"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-60"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <Link
               href="/signup"
               className="font-semibold text-primary hover:text-primary/80"
@@ -142,6 +156,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
