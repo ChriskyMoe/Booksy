@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Wallet, BarChart3, BrainCircuit } from 'lucide-react'
 
 export default async function Home() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (user) {
-    redirect('/dashboard')
+    redirect("/dashboard");
   }
 
   return (
@@ -98,5 +98,5 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
       <h3 className="mb-2 text-xl font-semibold text-white">{title}</h3>
       <p className="text-slate-300">{description}</p>
     </div>
-  )
+  );
 }
