@@ -68,7 +68,10 @@ export default function ForgotPasswordPage() {
           </div>
 
           <Link href="/" className="block">
-            <Button variant="outline" className="w-full">
+            <Button
+              variant="outline"
+              className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-12 py-4 text-white font-bold shadow-[0_4px_14px_0_rgb(0,118,255,39%)] transition-all duration-150 hover:shadow-[0_6px_20px_0_rgb(0,118,255,23%)] hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-500"
+            >
               Back to sign in
             </Button>
           </Link>
