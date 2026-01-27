@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBusiness } from '@/lib/actions/business'
 import AIFinancialAnalysis from '@/components/AIFinancialAnalysis'
-import LogoutButton from '@/components/LogoutButton'
-import Link from 'next/link'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
+import { AppHeader } from '@/components/layout/AppHeader'
 
 export default async function AIAssistantPage() {
   const supabase = await createClient()
@@ -21,53 +21,14 @@ export default async function AIAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between items-center">
-            <Link href="/dashboard" className="text-2xl font-bold text-gray-900">
-              📘 Booksy
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/transactions"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                Transactions
-              </Link>
-              <Link
-                href="/ledger"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                Ledger
-              </Link>
-              <Link
-                href="/currency-converter"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                Currency Converter
-              </Link>
-              <Link
-                href="/ai-assistant"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
-                AI Assistant
-              </Link>
-              <LogoutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AuthenticatedLayout>
+      <AppHeader
+        title="AI Financial Assistant"
+        subtitle="Get insights and answers about your finances"
+      />
+      <div className="p-6">
         <AIFinancialAnalysis />
-      </main>
-    </div>
+      </div>
+    </AuthenticatedLayout>
   )
 }

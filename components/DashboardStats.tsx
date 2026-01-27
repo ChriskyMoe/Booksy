@@ -1,4 +1,6 @@
 import { formatCurrency } from '@/lib/utils'
+import { Card, CardContent } from '@/components/ui/card'
+import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react'
 
 interface DashboardStatsProps {
   data: {
@@ -11,71 +13,57 @@ interface DashboardStatsProps {
 }
 
 export default function DashboardStats({ data }: DashboardStatsProps) {
+  const stats = [
+    {
+      label: 'Total Income',
+      value: formatCurrency(data.income, data.currency),
+      icon: TrendingUp,
+      className: 'text-success',
+      iconBg: 'bg-success/10',
+    },
+    {
+      label: 'Total Expenses',
+      value: formatCurrency(data.expenses, data.currency),
+      icon: TrendingDown,
+      className: 'text-destructive',
+      iconBg: 'bg-destructive/10',
+    },
+    {
+      label: 'Net Profit',
+      value: formatCurrency(data.profit, data.currency),
+      icon: data.profit >= 0 ? TrendingUp : TrendingDown,
+      className: data.profit >= 0 ? 'text-success' : 'text-destructive',
+      iconBg: data.profit >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+    },
+    {
+      label: 'Cash Balance',
+      value: formatCurrency(data.cashBalance, data.currency),
+      icon: Wallet,
+      className: data.cashBalance >= 0 ? 'text-success' : 'text-destructive',
+      iconBg: data.cashBalance >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="text-2xl">💰</div>
+      {stats.map((stat) => {
+        const Icon = stat.icon
+        return (
+          <div key={stat.label} className="stat-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.className}`}>
+                  {stat.value}
+                </p>
+              </div>
+              <div className={`h-12 w-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
+                <Icon className={`h-6 w-6 ${stat.className}`} />
+              </div>
+            </div>
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Total Income</p>
-            <p className="text-2xl font-semibold text-green-600">
-              {formatCurrency(data.income, data.currency)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="text-2xl">💸</div>
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Total Expenses</p>
-            <p className="text-2xl font-semibold text-red-600">
-              {formatCurrency(data.expenses, data.currency)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="text-2xl">📈</div>
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Net Profit</p>
-            <p
-              className={`text-2xl font-semibold ${
-                data.profit >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {formatCurrency(data.profit, data.currency)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="text-2xl">💵</div>
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Cash Balance</p>
-            <p
-              className={`text-2xl font-semibold ${
-                data.cashBalance >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {formatCurrency(data.cashBalance, data.currency)}
-            </p>
-          </div>
-        </div>
-      </div>
+        )
+      })}
     </div>
   )
 }

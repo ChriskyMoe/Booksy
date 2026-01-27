@@ -153,23 +153,28 @@ Backend: API routes + AI service
 
 Database: Supabase (PostgreSQL)
 
+![High level archite](https://github.com/user-attachments/assets/8586ad7a-eaf9-4de1-97ee-dd1781c229b1)
+
+
 Page Structure
 
-Public
-
-Landing page
-
-Login / Signup
-
-Authenticated
-
-Dashboard
-
-Transactions
-
-Ledger
-
-AI Assistant
+    Public
+    
+    Landing page
+    
+    Login / Signup
+    
+    Authenticated
+    
+    Dashboard
+    
+    Transactions
+    
+    Ledger
+    
+    Currency Converter
+    
+    AI Assistant
 
 Settings
 
@@ -188,6 +193,9 @@ exchange_rates – Currency exchange rates
 ai_insights – Generated financial summaries
 
 See supabase/schema.sql for the complete schema with Row Level Security (RLS) policies.
+
+![System archite-2026-01-22-173547](https://github.com/user-attachments/assets/44704ce7-fabc-4f02-a3a1-c8c0adfd3929)
+
 
 🔌 API Endpoints (MVP)
   POST   /auth/signup
