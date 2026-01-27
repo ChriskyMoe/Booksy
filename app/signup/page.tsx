@@ -1,24 +1,17 @@
 "use client";
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft } from 'lucide-react'; // Import the icon
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react"; // Import the icon
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");git 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -94,8 +87,13 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center bg-background px-6 py-12 sm:px-10"> {/* Added relative positioning */}
-        <Link href="/" className="absolute left-6 top-6 text-muted-foreground hover:text-foreground">
+      <div className="relative flex items-center justify-center bg-background px-6 py-12 sm:px-10">
+        {" "}
+        {/* Added relative positioning */}
+        <Link
+          href="/"
+          className="absolute left-6 top-6 text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-6 w-6" />
         </Link>
         <div className="w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-8 shadow-elevated">
