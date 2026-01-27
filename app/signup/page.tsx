@@ -54,7 +54,13 @@ export default function SignupPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 px-8 py-12 text-white">
+      <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-gray-900 text-white bg-gradient-to-br from-blue-500/20 via-indigo-700/20 to-purple-900/20 overflow-x-hidden px-8 py-12">
+        <Link
+          href="/"
+          className="absolute left-8 top-8 z-20 flex items-center gap-2 text-2xl font-bold tracking-tighter text-white hover:opacity-80 transition-opacity"
+        >
+          Booksy
+        </Link>
         <div
           className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.1),_transparent_40%)] opacity-60"
           aria-hidden

@@ -1,6 +1,5 @@
 import { getBusiness } from '@/lib/actions/business'
 import Sidebar from './Sidebar'
-import TopBar from './TopBar'
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode
@@ -14,7 +13,6 @@ export default async function AuthenticatedLayout({ children }: AuthenticatedLay
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar businessName={businessName} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar businessName={businessName} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
