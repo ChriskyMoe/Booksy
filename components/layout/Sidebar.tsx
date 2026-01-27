@@ -53,9 +53,7 @@ export default function Sidebar({ businessName }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-16 items-center px-6 border-b border-sidebar-border/50">
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-md transition-transform group-hover:scale-105">
-            B
-          </div>
+
           <span className="text-xl font-bold text-sidebar-foreground tracking-tight">Booksy</span>
         </Link>
       </div>
