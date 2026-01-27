@@ -26,7 +26,7 @@ export default async function AIAssistantPage() {
         title="AI Financial Assistant"
         subtitle="Get insights and answers about your finances"
       />
-      <div className="p-6">
+      <div className="p-8 bg-background/50">
         <AIFinancialAnalysis />
       </div>
     </AuthenticatedLayout>

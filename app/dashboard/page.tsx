@@ -41,7 +41,7 @@ export default async function DashboardPage() {
         title="Dashboard"
         subtitle="Overview of your business finances"
       />
-      <div className="p-6 space-y-8">
+      <div className="p-8 space-y-8 bg-background/50">
         <DashboardStats data={dashboardData} />
 
         <DashboardCharts

@@ -29,7 +29,7 @@ export default async function TransactionsPage() {
       >
         <AddTransactionButton />
       </AppHeader>
-      <div className="p-6">
+      <div className="p-8 bg-background/50">
         <TransactionList />
       </div>
     </AuthenticatedLayout>

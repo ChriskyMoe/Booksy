@@ -10,19 +10,19 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const statusConfig = {
     draft: {
       label: 'Draft',
-      className: 'bg-muted text-muted-foreground',
+      className: 'bg-muted text-muted-foreground border border-border',
     },
     sent: {
       label: 'Sent',
-      className: 'bg-primary/10 text-primary',
+      className: 'bg-primary/10 text-primary border border-primary/30',
     },
     paid: {
       label: 'Paid',
-      className: 'bg-success/10 text-success',
+      className: 'bg-success/10 text-success border border-success/30',
     },
     overdue: {
       label: 'Overdue',
-      className: 'bg-destructive/10 text-destructive',
+      className: 'bg-destructive/10 text-destructive border border-destructive/30',
     },
   }
 
@@ -31,7 +31,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
         config.className,
         className
       )}

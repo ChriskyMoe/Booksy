@@ -19,28 +19,28 @@ export default function DashboardStats({ data }: DashboardStatsProps) {
       value: formatCurrency(data.income, data.currency),
       icon: TrendingUp,
       className: 'text-success',
-      iconBg: 'bg-success/10',
+      iconBg: 'bg-success/10 border border-success/30',
     },
     {
       label: 'Total Expenses',
       value: formatCurrency(data.expenses, data.currency),
       icon: TrendingDown,
       className: 'text-destructive',
-      iconBg: 'bg-destructive/10',
+      iconBg: 'bg-destructive/10 border border-destructive/30',
     },
     {
       label: 'Net Profit',
       value: formatCurrency(data.profit, data.currency),
       icon: data.profit >= 0 ? TrendingUp : TrendingDown,
       className: data.profit >= 0 ? 'text-success' : 'text-destructive',
-      iconBg: data.profit >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+      iconBg: data.profit >= 0 ? 'bg-success/10 border border-success/30' : 'bg-destructive/10 border border-destructive/30',
     },
     {
       label: 'Cash Balance',
       value: formatCurrency(data.cashBalance, data.currency),
       icon: Wallet,
-      className: data.cashBalance >= 0 ? 'text-success' : 'text-destructive',
-      iconBg: data.cashBalance >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+      className: data.cashBalance >= 0 ? 'text-primary' : 'text-destructive',
+      iconBg: data.cashBalance >= 0 ? 'bg-primary/10 border border-primary/30' : 'bg-destructive/10 border border-destructive/30',
     },
   ]
 
@@ -52,13 +52,13 @@ export default function DashboardStats({ data }: DashboardStatsProps) {
           <div key={stat.label} className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.className}`}>
+                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                <p className={`text-2xl font-bold mt-2 ${stat.className}`}>
                   {stat.value}
                 </p>
               </div>
-              <div className={`h-12 w-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
-                <Icon className={`h-6 w-6 ${stat.className}`} />
+              <div className={`h-14 w-14 rounded-xl ${stat.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`h-7 w-7 ${stat.className}`} />
               </div>
             </div>
           </div>

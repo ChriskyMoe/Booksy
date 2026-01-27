@@ -26,7 +26,7 @@ export default async function LedgerPage() {
         title="Ledger"
         subtitle="View all transactions with filters"
       />
-      <div className="p-6">
+      <div className="p-8 bg-background/50">
         <LedgerView />
       </div>
     </AuthenticatedLayout>

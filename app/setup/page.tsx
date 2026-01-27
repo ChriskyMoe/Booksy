@@ -3,6 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 const BUSINESS_TYPES = [
   'Retail',
@@ -79,50 +83,52 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-2xl space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Set up your business
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-foreground">Set up your business</h1>
+          <p className="mt-3 text-lg text-muted-foreground">
             Let's get started with some basic information about your business
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+
+        <form className="space-y-8" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 flex gap-3 items-start">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
-          <div className="space-y-4 rounded-md bg-white p-6 shadow-sm">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Business Name *
-              </label>
-              <input
+          <div className="space-y-6 rounded-xl border border-border bg-card p-8 shadow-card">
+            {/* Business Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-base font-semibold">
+                Business Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
                 id="name"
                 name="name"
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                 placeholder="My Business"
+                className="rounded-lg border-border h-11"
               />
             </div>
 
-            <div>
-              <label htmlFor="businessType" className="block text-sm font-medium text-gray-700">
+            {/* Business Type */}
+            <div className="space-y-2">
+              <Label htmlFor="businessType" className="text-base font-semibold">
                 Business Type
-              </label>
+              </Label>
               <select
                 id="businessType"
                 name="businessType"
                 value={formData.businessType}
                 onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 h-11 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
               >
                 <option value="">Select a type</option>
                 {BUSINESS_TYPES.map((type) => (
@@ -133,17 +139,18 @@ export default function SetupPage() {
               </select>
             </div>
 
-            <div>
-              <label htmlFor="baseCurrency" className="block text-sm font-medium text-gray-700">
-                Base Currency *
-              </label>
+            {/* Base Currency */}
+            <div className="space-y-2">
+              <Label htmlFor="baseCurrency" className="text-base font-semibold">
+                Base Currency <span className="text-destructive">*</span>
+              </Label>
               <select
                 id="baseCurrency"
                 name="baseCurrency"
                 required
                 value={formData.baseCurrency}
                 onChange={(e) => setFormData({ ...formData, baseCurrency: e.target.value })}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 h-11 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
               >
                 {CURRENCIES.map((currency) => (
                   <option key={currency} value={currency}>
@@ -153,19 +160,17 @@ export default function SetupPage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Fiscal Year Start Date
-              </label>
-              <p className="mt-1 text-xs text-gray-500 mb-3">
-                When does your business fiscal year begin? Most businesses use January 1st, but
-                some use April 1st, July 1st, or October 1st.
+            {/* Fiscal Year Start Date */}
+            <div className="space-y-3 pt-4">
+              <Label className="text-base font-semibold">Fiscal Year Start Date</Label>
+              <p className="text-sm text-muted-foreground">
+                When does your business fiscal year begin? Most businesses use January 1st.
               </p>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <label
                     htmlFor="fiscalYearStartMonth"
-                    className="block text-xs font-medium text-gray-600 mb-1"
+                    className="block text-sm font-medium text-foreground"
                   >
                     Month
                   </label>
@@ -180,7 +185,7 @@ export default function SetupPage() {
                         fiscalYearStartMonth: parseInt(e.target.value),
                       })
                     }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    className="block w-full rounded-lg border border-border bg-background px-4 py-2.5 h-11 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
                   >
                     <option value={1}>January</option>
                     <option value={2}>February</option>
@@ -196,14 +201,14 @@ export default function SetupPage() {
                     <option value={12}>December</option>
                   </select>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label
                     htmlFor="fiscalYearStartDay"
-                    className="block text-xs font-medium text-gray-600 mb-1"
+                    className="block text-sm font-medium text-foreground"
                   >
                     Day
                   </label>
-                  <input
+                  <Input
                     id="fiscalYearStartDay"
                     name="fiscalYearStartDay"
                     type="number"
@@ -217,22 +222,28 @@ export default function SetupPage() {
                         fiscalYearStartDay: parseInt(e.target.value),
                       })
                     }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                    className="rounded-lg border-border h-11"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
-            >
-              {loading ? 'Setting up...' : 'Complete Setup'}
-            </button>
-          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            size="lg"
+            className="w-full rounded-lg bg-gradient-to-r from-primary to-accent text-white font-semibold"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Setting up...
+              </>
+            ) : (
+              'Complete Setup'
+            )}
+          </Button>
         </form>
       </div>
     </div>
