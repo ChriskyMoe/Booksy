@@ -59,10 +59,7 @@ export default function Sidebar({ businessName }: SidebarProps) {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="border-t border-sidebar-border p-4">
-        <LogoutButton />
-      </div>
+
     </div>
   )
 }
