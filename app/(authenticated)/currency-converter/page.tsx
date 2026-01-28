@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBusiness } from '@/lib/actions/business'
-import CurrencyConverter from '@/components/CurrencyConverter'
+import { CurrencySummaryCards } from '@/components/CurrencySummaryCards'
+import { CurrencyMainConverter } from '@/components/CurrencyMainConverter'
+import { CurrencyChart } from '@/components/CurrencyChart'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { AppHeader } from '@/components/layout/AppHeader'
 
@@ -24,10 +26,12 @@ export default async function CurrencyConverterPage() {
     <AuthenticatedLayout>
       <AppHeader
         title="Currency Converter"
-        subtitle="Convert amounts between currencies with real-time exchange rates"
+        subtitle="Finance-grade real-time conversion and historical trends"
       />
-      <div className="p-6">
-        <CurrencyConverter />
+      <div className="p-6 max-w-5xl mx-auto space-y-8">
+        <CurrencySummaryCards />
+        <CurrencyMainConverter />
+        <CurrencyChart />
       </div>
     </AuthenticatedLayout>
   )
