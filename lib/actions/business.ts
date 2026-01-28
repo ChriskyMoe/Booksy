@@ -54,3 +54,25 @@ export async function updateBusiness(updates: {
 
   return { data }
 }
+
+export async function deleteBusiness() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+
+  const { error } = await supabase
+    .from('businesses')
+    .delete()
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { data: { success: true } }
+}
