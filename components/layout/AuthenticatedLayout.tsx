@@ -11,10 +11,10 @@ export default async function AuthenticatedLayout({ children }: AuthenticatedLay
   const businessName = businessResult.data?.name
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar businessName={businessName} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar businessName={businessName} />
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <TopBar businessName={businessName} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar businessName={businessName} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>

@@ -29,26 +29,7 @@ export default function Sidebar({ businessName }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b border-sidebar-border px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-lg">📘</span>
-          </div>
-          <span className="text-xl font-bold text-sidebar-foreground">Booksy</span>
-        </Link>
-      </div>
-
-      {/* Business Name */}
-      {businessName && (
-        <div className="border-b border-sidebar-border px-6 py-4">
-          <p className="text-sm font-medium text-sidebar-foreground truncate">
-            {businessName}
-          </p>
-        </div>
-      )}
-
+    <div className="flex h-full w-64 flex-col border-r text-white bg-gradient-to-br from-blue-500/20 via-indigo-700/20 to-purple-900/20 overflow-x-hidden">
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
