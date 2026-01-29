@@ -10,7 +10,6 @@ export default async function TransactionList() {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="text-4xl mb-4">📝</div>
           <h3 className="text-lg font-semibold text-foreground">No transactions yet</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Start tracking your income and expenses by adding your first transaction

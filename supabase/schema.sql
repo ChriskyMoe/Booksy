@@ -7,6 +7,7 @@ CREATE TABLE businesses (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   business_type VARCHAR(100),
+  avatar_url VARCHAR(255),
   base_currency VARCHAR(3) NOT NULL DEFAULT 'USD',
   fiscal_year_start_month INTEGER NOT NULL DEFAULT 1,
   fiscal_year_start_day INTEGER NOT NULL DEFAULT 1,
