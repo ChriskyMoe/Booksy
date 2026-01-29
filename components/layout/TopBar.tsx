@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, User } from "lucide-react";
+import { Bell, User, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { cn } from "@/lib/utils";
@@ -12,9 +12,14 @@ import { useRouter } from "next/navigation";
 interface TopBarProps {
   businessName?: string;
   avatarUrl?: string | null;
+  onMenuClick?: () => void;
 }
 
-export default function TopBar({ businessName, avatarUrl }: TopBarProps) {
+export default function TopBar({
+  businessName,
+  avatarUrl,
+  onMenuClick,
+}: TopBarProps) {
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const router = useRouter();
 
@@ -23,9 +28,18 @@ export default function TopBar({ businessName, avatarUrl }: TopBarProps) {
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur text-white bg-gradient-to-br from-blue-500/20 via-indigo-700/20 to-purple-900/20 overflow-x-hidden">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-foreground">Booksy</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-accent"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="text-xl font-bold text-foreground">Booksy</span>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
