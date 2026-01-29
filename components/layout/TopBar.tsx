@@ -12,11 +12,15 @@ import { useRouter } from 'next/navigation'
 
 interface TopBarProps {
   businessName?: string
+  avatarUrl?: string | null
 }
 
-export default function TopBar({ businessName }: TopBarProps) {
+export default function TopBar({ businessName, avatarUrl }: TopBarProps) {
   const [query, setQuery] = useState('')
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
   const router = useRouter()
+
+  const showAvatarImage = Boolean(avatarUrl) && !avatarLoadFailed
 
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur text-white bg-gradient-to-br from-blue-500/20 via-indigo-700/20 to-purple-900/20 overflow-x-hidden">
@@ -50,8 +54,18 @@ export default function TopBar({ businessName }: TopBarProps) {
           <DropdownMenu
             trigger={
               <div className="hidden sm:flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 cursor-pointer hover:bg-accent">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-                  <User className="h-4 w-4 text-primary" />
+                <div className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                  {showAvatarImage ? (
+                    // Use plain img to avoid Next/Image remote config issues.
+                    <img
+                      src={avatarUrl!}
+                      alt="Business avatar"
+                      className="h-full w-full object-cover"
+                      onError={() => setAvatarLoadFailed(true)}
+                    />
+                  ) : (
+                    <User className="h-4 w-4 text-primary" />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-medium text-foreground">

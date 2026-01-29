@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import "server-only";
 
+import AvatarUploadForm from '@/components/AvatarUploadForm'
+
 export default async function ProfilePage() {
   const supabase = await createClient()
   const {
@@ -46,6 +48,7 @@ export default async function ProfilePage() {
         subtitle="Manage your business and account details"
       />
       <div className="p-6 max-w-4xl mx-auto space-y-8">
+        <AvatarUploadForm currentAvatarUrl={business.avatar_url} />
         <div className="rounded-lg bg-card border border-border shadow-sm p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Business Details</h3>
           <form action={handleUpdate} className="space-y-4">

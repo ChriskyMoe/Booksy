@@ -56,34 +56,36 @@ export default function ExpensePieChart({ data, currency }: ExpensePieChartProps
   };
 
   return (
-    <div className="h-80 w-full rounded-lg bg-card p-4 shadow-sm">
+    <div className="h-80 w-full rounded-lg bg-card p-4 shadow-sm flex flex-col">
       <h3 className="mb-4 text-lg font-semibold text-foreground">
         Expense Breakdown by Category
       </h3>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={renderCustomizedLabel}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={tooltipContentStyle}
-            itemStyle={tooltipItemStyle}
-            formatter={(value: number) => formatCurrency(value, currency)}
-          />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={renderCustomizedLabel}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={tooltipContentStyle}
+              itemStyle={tooltipItemStyle}
+              formatter={(value: number) => formatCurrency(value, currency)}
+            />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
