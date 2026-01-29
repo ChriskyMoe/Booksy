@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Booksy - AI-Powered Bookkeeping",
-  description: "Track income and expenses effortlessly with AI-powered financial insights",
+  description:
+    "Track income and expenses effortlessly with AI-powered financial insights",
 };
 
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -26,6 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
