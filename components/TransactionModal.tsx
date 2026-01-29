@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createTransaction } from "@/lib/actions/transactions";
 import { getCategories } from "@/lib/actions/categories";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -82,7 +83,6 @@ export default function TransactionModal({
       setError(result.error);
       setLoading(false);
     } else {
-      // Reset form
       setFormData({
         category_id: "",
         amount: "",
@@ -104,23 +104,23 @@ export default function TransactionModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
-        <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+        <div className="relative w-full max-w-md rounded-lg bg-card p-6 shadow-xl">
+          <h3 className="mb-4 text-lg font-semibold text-foreground">
             Add Transaction
           </h3>
 
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="mb-4 rounded-md bg-destructive/10 p-3">
+              <p className="text-sm text-destructive-foreground">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Category *
               </label>
               <select
@@ -129,7 +129,7 @@ export default function TransactionModal({
                 onChange={(e) =>
                   setFormData({ ...formData, category_id: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
@@ -142,7 +142,7 @@ export default function TransactionModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-muted-foreground">
                   Amount *
                 </label>
                 <input
@@ -153,11 +153,11 @@ export default function TransactionModal({
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-muted-foreground">
                   Currency
                 </label>
                 <select
@@ -165,7 +165,7 @@ export default function TransactionModal({
                   onChange={(e) =>
                     setFormData({ ...formData, currency: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
                 >
                   {CURRENCIES.map((curr) => (
                     <option key={curr} value={curr}>
@@ -177,7 +177,7 @@ export default function TransactionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Date *
               </label>
               <input
@@ -187,12 +187,12 @@ export default function TransactionModal({
                 onChange={(e) =>
                   setFormData({ ...formData, transaction_date: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Payment Method *
               </label>
               <select
@@ -205,7 +205,7 @@ export default function TransactionModal({
                       .value as typeof formData.payment_method,
                   })
                 }
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
               >
                 {PAYMENT_METHODS.map((method) => (
                   <option key={method} value={method}>
@@ -216,7 +216,7 @@ export default function TransactionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Client/Vendor
               </label>
               <input
@@ -225,13 +225,13 @@ export default function TransactionModal({
                 onChange={(e) =>
                   setFormData({ ...formData, client_vendor: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
                 placeholder="Optional"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Notes
               </label>
               <textarea
@@ -240,26 +240,25 @@ export default function TransactionModal({
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 rows={3}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
                 placeholder="Optional notes"
               />
             </div>
 
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={onClose}
-                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={loading}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {loading ? "Adding..." : "Add Transaction"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

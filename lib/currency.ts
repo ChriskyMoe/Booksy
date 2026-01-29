@@ -55,22 +55,21 @@ async function fetchExchangeRateFromAPI(
   toCurrency: string,
   date: string
 ): Promise<number> {
-  // Placeholder implementation
-  // In production, use a real API like:
-  // - exchangerate-api.com
-  // - fixer.io
-  // - currencylayer.com
+  // Use the real API from exchangeRate.ts
+  const { getExchangeRates } = await import('@/lib/services/exchangeRate')
 
-  // For MVP, return 1 (same currency) or a fixed rate
-  // You can implement actual API calls here
-  console.warn(
-    `Exchange rate API not implemented. Using placeholder rate for ${fromCurrency} to ${toCurrency}`
-  )
+  try {
+    const data = await getExchangeRates(fromCurrency)
+    const rate = data.conversion_rates[toCurrency]
 
-  // Example: If you have an API key, you could do:
-  // const response = await fetch(`https://api.exchangerate-api.com/v4/historical/${fromCurrency}/${date}`)
-  // const data = await response.json()
-  // return data.rates[toCurrency]
+    if (!rate) {
+      throw new Error(`No exchange rate found for ${fromCurrency} to ${toCurrency}`)
+    }
 
-  return 1 // Placeholder
+    return rate
+  } catch (error) {
+    console.error('Error fetching exchange rate from API:', error)
+    // Fallback to 1 if API fails
+    return 1
+  }
 }

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getExchangeRates, convertAmount, SUPPORTED_CURRENCIES, CURRENCY_NAMES } from '@/lib/services/exchangeRate'
+import { getExchangeRates, convertAmount } from '@/lib/services/exchangeRate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SearchableCurrencySelect } from '@/components/SearchableCurrencySelect'
 import { ArrowUpDown, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export default function CurrencyConverter() {
@@ -82,22 +82,15 @@ export default function CurrencyConverter() {
                                 {/* From Currency */}
                                 <div className="space-y-2">
                                     <Label htmlFor="from-currency">From Currency</Label>
-                                    <Select value={fromCurrency} onValueChange={(value) => {
-                                        setFromCurrency(value)
-                                        setHasConverted(false)
-                                        setConvertedAmount('')
-                                    }}>
-                                        <SelectTrigger id="from-currency">
-                                            <SelectValue placeholder="Select base currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {SUPPORTED_CURRENCIES.map(currency => (
-                                                <SelectItem key={currency} value={currency}>
-                                                    {currency} - {CURRENCY_NAMES[currency]}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <SearchableCurrencySelect
+                                        value={fromCurrency}
+                                        onValueChange={(value) => {
+                                            setFromCurrency(value)
+                                            setHasConverted(false)
+                                            setConvertedAmount('')
+                                        }}
+                                        placeholder="Select base currency"
+                                    />
                                     <p className="text-xs text-muted-foreground">Select base currency</p>
                                 </div>
 
@@ -132,22 +125,15 @@ export default function CurrencyConverter() {
                                 {/* To Currency */}
                                 <div className="space-y-2">
                                     <Label htmlFor="to-currency">To Currency</Label>
-                                    <Select value={toCurrency} onValueChange={(value) => {
-                                        setToCurrency(value)
-                                        setHasConverted(false)
-                                        setConvertedAmount('')
-                                    }}>
-                                        <SelectTrigger id="to-currency">
-                                            <SelectValue placeholder="Select target currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {SUPPORTED_CURRENCIES.map(currency => (
-                                                <SelectItem key={currency} value={currency}>
-                                                    {currency} - {CURRENCY_NAMES[currency]}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <SearchableCurrencySelect
+                                        value={toCurrency}
+                                        onValueChange={(value) => {
+                                            setToCurrency(value)
+                                            setHasConverted(false)
+                                            setConvertedAmount('')
+                                        }}
+                                        placeholder="Select target currency"
+                                    />
                                     <p className="text-xs text-muted-foreground">Select target currency</p>
                                 </div>
 

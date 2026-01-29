@@ -15,6 +15,7 @@ export interface Database {
           user_id: string
           name: string
           business_type: string | null
+          avatar_url: string | null
           base_currency: string
           fiscal_year_start_month: number
           fiscal_year_start_day: number
@@ -26,6 +27,7 @@ export interface Database {
           user_id: string
           name: string
           business_type?: string | null
+          avatar_url?: string | null
           base_currency?: string
           fiscal_year_start_month?: number
           fiscal_year_start_day?: number
@@ -37,6 +39,7 @@ export interface Database {
           user_id?: string
           name?: string
           business_type?: string | null
+          avatar_url?: string | null
           base_currency?: string
           fiscal_year_start_month?: number
           fiscal_year_start_day?: number
