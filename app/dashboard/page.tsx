@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getDashboardData } from '@/lib/actions/dashboard'
+import { getDashboardData, getExpenseBreakdownChartData } from '@/lib/actions/dashboard'
 import { getBusiness } from '@/lib/actions/business'
 import DashboardStats from '@/components/DashboardStats'
 import ExpenseBreakdown from '@/components/ExpenseBreakdown'
@@ -8,6 +8,7 @@ import RecentTransactions from '@/components/RecentTransactions'
 import DashboardCharts from '@/components/DashboardCharts'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { AppHeader } from '@/components/layout/AppHeader'
+import ExpensePieChart from '@/components/ExpensePieChart'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -26,6 +27,9 @@ export default async function DashboardPage() {
 
   const dashboardResult = await getDashboardData()
   const dashboardData = dashboardResult.data
+
+  const expenseBreakdownChartDataResult = await getExpenseBreakdownChartData()
+  const expenseBreakdownChartData = expenseBreakdownChartDataResult.data || []
 
   if (!dashboardData) {
     return (
@@ -52,7 +56,10 @@ export default async function DashboardPage() {
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <ExpenseBreakdown data={dashboardData.expenseBreakdown} />
+          <div className="space-y-8">
+            <ExpensePieChart data={expenseBreakdownChartData} currency={dashboardData.currency} />
+            <ExpenseBreakdown data={dashboardData.expenseBreakdown} />
+          </div>
           <RecentTransactions />
         </div>
       </div>
