@@ -1,29 +1,32 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { getBusiness } from '@/lib/actions/business'
-import { CurrencySummaryCards } from '@/components/CurrencySummaryCards'
-import { CurrencyMainConverter } from '@/components/CurrencyMainConverter'
-import { CurrencyChart } from '@/components/CurrencyChart'
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
-import { AppHeader } from '@/components/layout/AppHeader'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getBusiness } from "@/lib/actions/business";
+import { CurrencySummaryCards } from "@/components/CurrencySummaryCards";
+import { CurrencyMainConverter } from "@/components/CurrencyMainConverter";
+import { CurrencyChart } from "@/components/CurrencyChart";
+import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export default async function CurrencyConverterPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  const businessResult = await getBusiness()
+  const businessResult = await getBusiness();
   if (businessResult.error || !businessResult.data) {
-    redirect('/setup')
+    redirect("/setup");
   }
+  const business = businessResult.data;
+  const businessName = business?.name;
+  const avatarUrl = business?.avatar_url;
 
   return (
-    <AuthenticatedLayout>
+    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
       <AppHeader
         title="Currency Converter"
         subtitle="Finance-grade real-time conversion and historical trends"
@@ -34,5 +37,5 @@ export default async function CurrencyConverterPage() {
         <CurrencyChart />
       </div>
     </AuthenticatedLayout>
-  )
+  );
 }

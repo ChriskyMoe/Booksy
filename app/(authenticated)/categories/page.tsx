@@ -1,34 +1,37 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { getBusiness } from '@/lib/actions/business'
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
-import { AppHeader } from '@/components/layout/AppHeader'
-import CategoriesContent from '@/components/CategoriesContent'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getBusiness } from "@/lib/actions/business";
+import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
+import { AppHeader } from "@/components/layout/AppHeader";
+import CategoriesContent from "@/components/CategoriesContent";
 
 export default async function CategoriesPage() {
-    const supabase = await createClient()
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect('/login')
-    }
+  if (!user) {
+    redirect("/login");
+  }
 
-    const businessResult = await getBusiness()
-    if (businessResult.error || !businessResult.data) {
-        redirect('/setup')
-    }
+  const businessResult = await getBusiness();
+  if (businessResult.error || !businessResult.data) {
+    redirect("/setup");
+  }
+  const business = businessResult.data;
+  const businessName = business?.name;
+  const avatarUrl = business?.avatar_url;
 
-    return (
-        <AuthenticatedLayout>
-            <AppHeader
-                title="Categories"
-                subtitle="Manage and track your income & expense sources"
-            />
-            <div className="p-6">
-                <CategoriesContent />
-            </div>
-        </AuthenticatedLayout>
-    )
+  return (
+    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+      <AppHeader
+        title="Categories"
+        subtitle="Manage and track your income & expense sources"
+      />
+      <div className="p-6">
+        <CategoriesContent />
+      </div>
+    </AuthenticatedLayout>
+  );
 }
