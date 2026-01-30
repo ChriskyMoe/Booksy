@@ -1,43 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/supabase";
+import { useState } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import ChatWidget from "@/components/ChatWidget";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
+  businessName?: string;
+  avatarUrl?: string | null;
 }
 
 export default function AuthenticatedLayout({
   children,
+  businessName,
+  avatarUrl,
 }: AuthenticatedLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [businessName, setBusinessName] = useState<string | undefined>();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("businesses")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-        if (data) {
-          setBusinessName(data.name);
-          setAvatarUrl(data.avatar_url);
-        }
-      }
-    };
-    fetchBusiness();
-  }, []);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
