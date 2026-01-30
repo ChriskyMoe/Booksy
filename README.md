@@ -1,52 +1,216 @@
-📘 Booksy
+# 📘 Booksy
 
-AI-Powered Expense & Income Tracking for Small Businesses
+**AI-Powered Expense & Income Tracking for Small Businesses**
 
-Booksy is a Next.js application that helps small businesses record income and expenses effortlessly and understand their financial health through AI-powered insights — without requiring accounting expertise.
+Booksy is a modern Next.js application that helps small businesses and freelancers track income and expenses effortlessly. Get clear financial insights powered by AI — no accounting degree required.
 
-🧭 Overview
+![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?style=flat-square&logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.3-blue?style=flat-square&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20DB-green?style=flat-square&logo=supabase)
 
-Small business owners often struggle with manual bookkeeping, poor financial visibility, and complex accounting tools designed for professionals rather than operators.
+## 🌟 Features
 
-Booksy focuses on:
+### Core Functionality
 
-Simple bookkeeping
+- **📊 Dashboard Overview** - Real-time financial health at a glance
+- **💰 Transaction Management** - Quick income & expense tracking with categories
+- **📈 Visual Analytics** - Beautiful charts and spending breakdowns
+- **🏷️ Smart Categories** - Organize transactions with custom categories
+- **💱 Currency Converter** - Multi-currency support with live exchange rates
+- **📖 Ledger View** - Comprehensive transaction history
+- **🤖 AI Financial Assistant** - Get insights and answers about your finances
+- **🎨 Dark/Light Mode** - Comfortable viewing in any environment
 
-Clear financial visibility
+### Authentication & Security
 
-AI explanations instead of accounting jargon
+- **Secure Login/Signup** - Powered by Supabase Auth
+- **Password Reset** - Easy password recovery flow
+- **Profile Management** - Business/personal profile setup
+- **Avatar Upload** - Personalized user profiles
 
-🎯 MVP Goal
+## 🚀 Getting Started
 
-Deliver a reliable bookkeeping system with AI-powered summaries and insights to validate whether automated financial analysis provides real value to small businesses.
+### Prerequisites
 
-👥 Target Users
-Primary Users
+- Node.js 20+
+- npm or yarn
+- Supabase account
+- OpenAI API key (for AI features)
 
-Small business owners (shops, freelancers, service providers)
+### Installation
 
-Limited accounting knowledge
+1. **Clone the repository**
 
-Need quick answers to financial questions
+```bash
+git clone https://github.com/yourusername/booksy.git
+cd booksy
+```
 
-Web-first users
+2. **Install dependencies**
 
-Secondary Users
+```bash
+npm install
+```
 
-Business managers
+3. **Set up environment variables**
 
-Early-stage startup founders
+Create a `.env.local` file in the root directory:
 
-✨ Features
-Core Functionality (MVP)
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
 
-Business Authentication & Profile
+4. **Set up Supabase**
 
-Secure authentication with Supabase Auth
+Run the SQL schema files in your Supabase project:
 
-Business profile setup (name, type, base currency, fiscal year)
+- `supabase/schema.sql` - Main database schema
+- `supabase/storage.sql` - Storage configuration
 
-Income & Expense Tracking
+5. **Run the development server**
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🏗️ Tech Stack
+
+### Frontend
+
+- **Next.js 16** - React framework with App Router
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Tailwind CSS 4** - Utility-first styling
+- **GSAP** - Advanced animations
+- **Recharts** - Data visualization
+- **Lucide Icons** - Beautiful iconography
+
+### Backend & Services
+
+- **Supabase** - Authentication, database, and storage
+- **OpenAI API** - AI-powered financial insights
+- **Exchange Rate API** - Real-time currency conversion
+
+### UI Components
+
+- **Radix UI** - Accessible component primitives
+- **next-themes** - Dark mode support
+- **Custom components** - Built with shadcn/ui patterns
+
+## 📁 Project Structure
+
+```
+booksy/
+├── app/                          # Next.js App Router pages
+│   ├── (authenticated)/         # Protected routes
+│   │   ├── categories/          # Category management
+│   │   └── currency-converter/  # Currency conversion
+│   ├── api/                     # API routes
+│   │   ├── ai-analysis/        # AI insights endpoint
+│   │   └── chat/               # AI chat endpoint
+│   ├── dashboard/              # Main dashboard
+│   ├── login/                  # Authentication pages
+│   ├── signup/
+│   ├── forgot-password/
+│   ├── reset-password/
+│   └── page.tsx               # Landing page
+├── components/                 # React components
+│   ├── landing/               # Landing page sections
+│   ├── layout/                # Layout components
+│   └── ui/                    # Reusable UI components
+├── lib/                       # Utilities and services
+│   ├── actions/               # Server actions
+│   ├── ai/                    # AI integration
+│   ├── services/              # External services
+│   └── supabase/              # Supabase client configs
+├── public/                    # Static assets
+│   └── images/               # Image assets
+├── supabase/                 # Database schemas
+└── types/                    # TypeScript types
+```
+
+## 🎨 Design Features
+
+- **Modern Landing Page** - Engaging hero section with interactive mockups
+- **Responsive Design** - Mobile-first approach, works on all devices
+- **Smooth Animations** - GSAP-powered scroll triggers and transitions
+- **Beautiful Auth Pages** - Translucent overlays with background images
+- **Intuitive Dashboard** - Clean, organized financial overview
+- **Accessible UI** - Built with accessibility in mind
+
+## 📊 Key Components
+
+### Landing Page
+
+- Hero section with animated mockups
+- Features showcase
+- How it works (3-step guide)
+- Testimonials with stats
+- Call-to-action sections
+
+### Dashboard
+
+- Real-time balance display
+- Income vs. expenses breakdown
+- Visual charts and graphs
+- Recent transactions
+- Quick action buttons
+
+### Transaction Management
+
+- Add/edit transactions
+- Category assignment
+- Transaction filtering
+- Export capabilities
+
+### AI Assistant
+
+- Natural language queries
+- Financial insights
+- Spending pattern analysis
+- Budget recommendations
+
+## 🔒 Security
+
+- Supabase Row Level Security (RLS) policies
+- Secure authentication flow
+- Protected API routes
+- Environment variable management
+- HTTPS only in production
+
+## 🚢 Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy
+
+### Other Platforms
+
+Works with any Next.js hosting provider (Netlify, AWS, etc.)
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📧 Support
+
+For support, email support@booksy.app or open an issue on GitHub.
+
+---
+
+**Built with ❤️ for small businesses and freelancers**
 
 Record transactions with:
 
@@ -155,25 +319,24 @@ Database: Supabase (PostgreSQL)
 
 ![High level archite](https://github.com/user-attachments/assets/8586ad7a-eaf9-4de1-97ee-dd1781c229b1)
 
-
 Page Structure
 
     Public
-    
+
     Landing page
-    
+
     Login / Signup
-    
+
     Authenticated
-    
+
     Dashboard
-    
+
     Transactions
-    
+
     Ledger
-    
+
     Currency Converter
-    
+
     AI Assistant
 
 Settings
@@ -196,16 +359,15 @@ See supabase/schema.sql for the complete schema with Row Level Security (RLS) po
 
 ![System archite-2026-01-22-173547](https://github.com/user-attachments/assets/44704ce7-fabc-4f02-a3a1-c8c0adfd3929)
 
-
 🔌 API Endpoints (MVP)
-  POST   /auth/signup
-  POST   /auth/login
-  GET    /dashboard
-  POST   /transactions
-  GET    /transactions
-  GET    /ledger
-  POST   /ai/query
-  GET    /ai/summary
+POST /auth/signup
+POST /auth/login
+GET /dashboard
+POST /transactions
+GET /transactions
+GET /ledger
+POST /ai/query
+GET /ai/summary
 
 ⚙️ Setup Instructions
 Prerequisites
@@ -226,7 +388,7 @@ Environment Variables
       NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
       NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
       SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-  
+
       OPENAI_API_KEY=your_openai_api_key
       NEXT_PUBLIC_APP_URL=http://localhost:3000
 
