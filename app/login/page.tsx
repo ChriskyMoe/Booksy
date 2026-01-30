@@ -42,11 +42,13 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative flex flex-col items-center justify-center bg-gray-900 text-white bg-gradient-to-br from-blue-500/20 via-indigo-700/20 to-purple-900/20 overflow-x-hidden px-8 py-12 text-white">
+      <div className="relative flex flex-col items-center justify-center bg-gray-900 text-white overflow-hidden px-8 py-12">
+        {/* Background Image with Translucent Overlay */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.1),_transparent_40%)] opacity-60"
-          aria-hidden
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/sign-in-page.jpg)" }}
         />
+        <div className="absolute inset-0 bg-blue-900/70 backdrop-blur-sm" />
         <div className="relative z-10 mx-auto max-w-xl space-y-8 text-center lg:text-left">
           <div className="space-y-3">
             <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
