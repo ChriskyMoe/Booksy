@@ -41,13 +41,32 @@ const formatDataForChart = (data: HistoricalDataPoint[], range: string) => {
     })
 }
 
-export function CurrencyChart() {
+interface CurrencyChartProps {
+    fromCurrency?: string
+    toCurrency?: string
+    showControls?: boolean
+}
+
+export function CurrencyChart({
+    fromCurrency: propFromCurrency,
+    toCurrency: propToCurrency,
+    showControls = true
+}: CurrencyChartProps) {
     const [range, setRange] = useState('1Y')
-    const [fromCurrency, setFromCurrency] = useState('USD')
-    const [toCurrency, setToCurrency] = useState('EUR')
+    const [fromCurrency, setFromCurrency] = useState(propFromCurrency || 'USD')
+    const [toCurrency, setToCurrency] = useState(propToCurrency || 'EUR')
     const [data, setData] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Sync state with props if they change
+    useEffect(() => {
+        if (propFromCurrency) setFromCurrency(propFromCurrency)
+    }, [propFromCurrency])
+
+    useEffect(() => {
+        if (propToCurrency) setToCurrency(propToCurrency)
+    }, [propToCurrency])
 
     const ranges = ['1D', '5D', '1M', '1Y', '5Y', 'Max']
 
@@ -97,42 +116,45 @@ export function CurrencyChart() {
     }
 
     return (
-        <Card className="border-border/50 shadow-sm bg-card mt-8">
-            <CardHeader className="flex flex-col space-y-4 pb-7">
-                <div className="flex flex-col space-y-2">
-                    <CardTitle className="text-lg font-bold tracking-tight">Exchange Rate Trends</CardTitle>
-                    <CardDescription className="text-xs">Historical performance for the selected currency pair</CardDescription>
-                </div>
-
-                {/* Currency Selectors */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">From Currency</label>
-                        <SearchableCurrencySelect
-                            value={fromCurrency}
-                            onValueChange={setFromCurrency}
-                            placeholder="Select from currency"
-                            className="h-9"
-                        />
+        <Card className={`border-border/50 shadow-sm bg-card ${showControls ? 'mt-8' : 'mt-0 border-none shadow-none bg-transparent'}`}>
+            {showControls && (
+                <CardHeader className="flex flex-col space-y-4 pb-7">
+                    <div className="flex flex-col space-y-2">
+                        <CardTitle className="text-lg font-bold tracking-tight">Exchange Rate Trends</CardTitle>
+                        <CardDescription className="text-xs">Historical performance for the selected currency pair</CardDescription>
                     </div>
 
-                    <div className="flex items-end">
-                        <div className="text-sm font-medium text-muted-foreground">to</div>
-                    </div>
+                    {/* Currency Selectors */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground">From Currency</label>
+                            <SearchableCurrencySelect
+                                value={fromCurrency}
+                                onValueChange={setFromCurrency}
+                                placeholder="Select from currency"
+                                className="h-9"
+                            />
+                        </div>
 
-                    <div className="flex-1 space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">To Currency</label>
-                        <SearchableCurrencySelect
-                            value={toCurrency}
-                            onValueChange={setToCurrency}
-                            placeholder="Select to currency"
-                            className="h-9"
-                        />
-                    </div>
-                </div>
+                        <div className="flex items-end">
+                            <div className="text-sm font-medium text-muted-foreground">to</div>
+                        </div>
 
+                        <div className="flex-1 space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground">To Currency</label>
+                            <SearchableCurrencySelect
+                                value={toCurrency}
+                                onValueChange={setToCurrency}
+                                placeholder="Select to currency"
+                                className="h-9"
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+            )}
+            <CardContent className={showControls ? '' : 'pt-0'}>
                 {/* Time Range Selector */}
-                <div className="flex bg-muted/30 p-1 rounded-lg border border-border/50">
+                <div className="flex bg-muted/30 p-1 rounded-lg border border-border/50 mb-6 w-fit">
                     {ranges.map((r) => (
                         <button
                             key={r}
@@ -146,8 +168,6 @@ export function CurrencyChart() {
                         </button>
                     ))}
                 </div>
-            </CardHeader>
-            <CardContent>
                 {loading && (
                     <div className="flex items-center justify-center h-[300px]">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
