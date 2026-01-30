@@ -15,16 +15,13 @@ export default async function CategoriesPage() {
     redirect("/login");
   }
 
-  const businessResult = await getBusiness();
-  if (businessResult.error || !businessResult.data) {
+  const { data: business, error: businessError } = await getBusiness();
+  if (businessError || !business) {
     redirect("/setup");
   }
-  const business = businessResult.data;
-  const businessName = business?.name;
-  const avatarUrl = business?.avatar_url;
 
   return (
-    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+    <AuthenticatedLayout businessName={business.name} avatarUrl={business.avatar_url || undefined}>
       <AppHeader
         title="Categories"
         subtitle="Manage and track your income & expense sources"

@@ -9,7 +9,7 @@ export async function getBusiness() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'Not authenticated' }
+    return { data: null, error: 'Not authenticated' }
   }
 
   const { data, error } = await supabase
@@ -19,10 +19,10 @@ export async function getBusiness() {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { data: null, error: error.message }
   }
 
-  return { data }
+  return { data, error: null }
 }
 
 export async function updateBusiness(updates: {
@@ -38,7 +38,7 @@ export async function updateBusiness(updates: {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'Not authenticated' }
+    return { data: null, error: 'Not authenticated' }
   }
 
   const { data, error } = await supabase
@@ -49,10 +49,10 @@ export async function updateBusiness(updates: {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { data: null, error: error.message }
   }
 
-  return { data }
+  return { data, error: null }
 }
 
 export async function deleteBusiness() {
@@ -62,7 +62,7 @@ export async function deleteBusiness() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'Not authenticated' }
+    return { data: null, error: 'Not authenticated' }
   }
 
   const { error } = await supabase
@@ -71,10 +71,10 @@ export async function deleteBusiness() {
     .eq('user_id', user.id)
 
   if (error) {
-    return { error: error.message }
+    return { data: null, error: error.message }
   }
 
-  return { data: { success: true } }
+  return { data: { success: true }, error: null }
 }
 
 export async function updateBusinessAvatar(formData: FormData) {
@@ -84,19 +84,18 @@ export async function updateBusinessAvatar(formData: FormData) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'Not authenticated', status: 401 }
+    return { data: null, error: 'Not authenticated', status: 401 }
   }
 
-  const businessResult = await getBusiness()
-  if (businessResult.error || !businessResult.data) {
-    return { error: 'Business not found', status: 404 }
+  const { data: business, error: businessError } = await getBusiness()
+  if (businessError || !business) {
+    return { data: null, error: 'Business not found', status: 404 }
   }
 
-  const business = businessResult.data
   const avatarFile = formData.get('avatar') as File
 
   if (!avatarFile || avatarFile.size === 0) {
-    return { error: 'No avatar file provided', status: 400 }
+    return { data: null, error: 'No avatar file provided', status: 400 }
   }
 
   const fileExtension = avatarFile.name.split('.').pop() || 'png'
@@ -112,7 +111,7 @@ export async function updateBusinessAvatar(formData: FormData) {
 
   if (uploadError) {
     console.error('Avatar upload error:', uploadError)
-    return { error: uploadError.message || 'Failed to upload avatar', status: 500 }
+    return { data: null, error: uploadError.message || 'Failed to upload avatar', status: 500 }
   }
 
   // Get public URL
@@ -121,7 +120,7 @@ export async function updateBusinessAvatar(formData: FormData) {
     .getPublicUrl(newAvatarPath)
 
   if (!publicUrlData) {
-    return { error: 'Failed to get public URL for avatar', status: 500 }
+    return { data: null, error: 'Failed to get public URL for avatar', status: 500 }
   }
 
   const newAvatarUrl = publicUrlData.publicUrl
@@ -142,10 +141,10 @@ export async function updateBusinessAvatar(formData: FormData) {
 
   if (dbError) {
     console.error('Database update error:', dbError)
-    return { error: dbError.message || 'Failed to update business with new avatar', status: 500 }
+    return { data: null, error: dbError.message || 'Failed to update business with new avatar', status: 500 }
   }
 
-  return { data: { avatar_url: newAvatarUrl } }
+  return { data: { avatar_url: newAvatarUrl }, error: null, status: 200 }
 }
 
 export async function deleteBusinessAvatar() {
@@ -155,15 +154,13 @@ export async function deleteBusinessAvatar() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'Not authenticated', status: 401 }
+    return { data: null, error: 'Not authenticated', status: 401 }
   }
 
-  const businessResult = await getBusiness()
-  if (businessResult.error || !businessResult.data) {
-    return { error: 'Business not found', status: 404 }
+  const { data: business, error: businessError } = await getBusiness()
+  if (businessError || !business) {
+    return { data: null, error: 'Business not found', status: 404 }
   }
-
-  const business = businessResult.data
 
   // If there's an old avatar, delete it from storage
   if (business.avatar_url) {
@@ -172,7 +169,7 @@ export async function deleteBusinessAvatar() {
       const { error: removeError } = await supabase.storage.from('business-avatars').remove([oldAvatarPath])
       if (removeError) {
         console.error('Avatar deletion error:', removeError)
-        return { error: 'Failed to delete avatar', status: 500 }
+        return { data: null, error: 'Failed to delete avatar', status: 500 }
       }
     }
   }
@@ -185,8 +182,8 @@ export async function deleteBusinessAvatar() {
 
   if (dbError) {
     console.error('Database update error:', dbError)
-    return { error: 'Failed to update business', status: 500 }
+    return { data: null, error: 'Failed to update business', status: 500 }
   }
 
-  return { data: { success: true } }
+  return { data: { success: true }, error: null, status: 200 }
 }
