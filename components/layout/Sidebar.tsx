@@ -12,12 +12,14 @@ import {
   LogOut,
   Tag,
   X,
+  FileText,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Transactions", href: "/transactions", icon: Receipt },
+  { name: "Invoices", href: "/invoices", icon: FileText },
   { name: "Categories", href: "/categories", icon: Tag },
   { name: "Ledger", href: "/ledger", icon: BookOpen },
   { name: "Currency Converter", href: "/currency-converter", icon: DollarSign },
