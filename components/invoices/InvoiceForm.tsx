@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Plus, X, Check, Loader2 } from "lucide-react";
 
 interface InvoiceFormProps {
   invoice?: Invoice;
@@ -165,59 +166,85 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Line Items</h3>
-          <Button type="button" onClick={handleAddItem} variant="outline">
-            + Add Item
-          </Button>
+          <button
+            type="button"
+            onClick={handleAddItem}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
+          >
+            <Plus className="w-4 h-4" />
+            Add Item
+          </button>
         </div>
+
+        {/* Column Headers */}
+        {items.length > 0 && (
+          <div className="grid grid-cols-4 gap-2 px-2 mb-2">
+            <div className="text-sm font-semibold text-gray-700">
+              Description
+            </div>
+            <div className="text-sm font-semibold text-gray-700">Quantity</div>
+            <div className="text-sm font-semibold text-gray-700">
+              Unit Price
+            </div>
+            <div className="text-sm font-semibold text-gray-700">Amount</div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-4 gap-2 items-end">
-              <Input
-                placeholder="Description"
-                value={item.description}
-                onChange={(e) =>
-                  handleItemChange(index, "description", e.target.value)
-                }
-              />
-              <Input
-                type="number"
-                placeholder="Qty"
-                value={item.quantity}
-                onChange={(e) =>
-                  handleItemChange(
-                    index,
-                    "quantity",
-                    parseFloat(e.target.value)
-                  )
-                }
-              />
-              <Input
-                type="number"
-                placeholder="Price"
-                value={item.unit_price}
-                onChange={(e) =>
-                  handleItemChange(
-                    index,
-                    "unit_price",
-                    parseFloat(e.target.value)
-                  )
-                }
-              />
+              <div>
+                <Input
+                  placeholder="e.g., Web Design Services"
+                  value={item.description}
+                  onChange={(e) =>
+                    handleItemChange(index, "description", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Input
+                  type="number"
+                  placeholder="1"
+                  value={item.quantity}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      "quantity",
+                      parseFloat(e.target.value)
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  step="0.01"
+                  value={item.unit_price}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      "unit_price",
+                      parseFloat(e.target.value)
+                    )
+                  }
+                />
+              </div>
               <div className="flex gap-2">
                 <Input
                   disabled
                   value={item.amount.toFixed(2)}
                   className="bg-gray-100"
                 />
-                <Button
+                <button
                   type="button"
                   onClick={() => handleRemoveItem(index)}
-                  variant="destructive"
-                  size="sm"
+                  className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                  title="Remove item"
                 >
-                  Remove
-                </Button>
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -281,9 +308,23 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Saving..." : invoice ? "Update Invoice" : "Create Invoice"}
-      </Button>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-60 flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Check className="w-4 h-4" />
+            {invoice ? "Update Invoice" : "Create Invoice"}
+          </>
+        )}
+      </button>
     </form>
   );
 }

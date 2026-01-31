@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Plus } from "lucide-react";
 
 interface InvoiceListProps {
   invoices: any[];
@@ -31,10 +32,22 @@ export default function InvoiceList({ invoices, loading }: InvoiceListProps) {
   if (invoices.length === 0) {
     return (
       <Card className="p-12 text-center">
-        <p className="text-gray-500 mb-4">No invoices yet</p>
-        <Link href="/invoices/new">
-          <Button>Create your first invoice</Button>
-        </Link>
+        <div className="space-y-6">
+          <div>
+            <p className="text-gray-600 text-lg font-medium mb-2">
+              No invoices yet
+            </p>
+            <p className="text-gray-500 text-sm">
+              Get started by creating your first invoice
+            </p>
+          </div>
+          <Link href="/invoices/new">
+            <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+              <Plus className="w-4 h-4" />
+              Create Your First Invoice
+            </button>
+          </Link>
+        </div>
       </Card>
     );
   }
@@ -52,6 +65,9 @@ export default function InvoiceList({ invoices, loading }: InvoiceListProps) {
             </th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
               Amount
+            </th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              Status
             </th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
               Due Date
@@ -87,9 +103,9 @@ export default function InvoiceList({ invoices, loading }: InvoiceListProps) {
               </td>
               <td className="px-6 py-4">
                 <Link href={`/invoices/${invoice.id}`}>
-                  <Button variant="outline" size="sm">
+                  <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                     View
-                  </Button>
+                  </button>
                 </Link>
               </td>
             </tr>

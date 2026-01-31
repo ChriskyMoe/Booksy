@@ -8,8 +8,9 @@ import InvoiceDetailClient from "@/components/invoices/InvoiceDetailClient";
 export default async function InvoiceDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,7 +34,7 @@ export default async function InvoiceDetailPage({
         subtitle="View and manage your invoice"
       />
       <div className="p-6">
-        <InvoiceDetailClient invoiceId={params.id} />
+        <InvoiceDetailClient invoiceId={id} />
       </div>
     </AuthenticatedLayout>
   );
