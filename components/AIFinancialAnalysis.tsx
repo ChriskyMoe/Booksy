@@ -9,6 +9,7 @@ import {
   type AIAnalysisHistoryItem,
 } from "@/lib/actions/ai-analysis";
 import { Button } from "@/components/ui/button";
+import FinancialReportPDF from "@/components/FinancialReportPDF";
 
 // ... (interfaces and type definitions remain the same)
 
@@ -860,35 +861,11 @@ export default function AIFinancialAnalysis() {
               Export Report
             </h3>
             <div className="flex flex-wrap gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const content = buildExportText();
-                  const doc = new jsPDF({ unit: "pt", format: "a4" });
-                  const margin = 40;
-                  const pageWidth = doc.internal.pageSize.getWidth();
-                  const pageHeight = doc.internal.pageSize.getHeight();
-                  const textWidth = pageWidth - margin * 2;
-                  const lines = doc.splitTextToSize(content, textWidth);
-                  const lineHeight = 14;
-                  let cursorY = margin;
-
-                  for (let i = 0; i < lines.length; i++) {
-                    if (cursorY + lineHeight > pageHeight - margin) {
-                      doc.addPage();
-                      cursorY = margin;
-                    }
-                    doc.text(lines[i], margin, cursorY);
-                    cursorY += lineHeight;
-                  }
-
-                  doc.save(
-                    `financial-analysis-${new Date().toISOString().split("T")[0]}.pdf`
-                  );
-                }}
-              >
-                📄 Download PDF
-              </Button>
+              <FinancialReportPDF
+                analysis={analysis}
+                financialData={financialData}
+                period={getDateRange()}
+              />
               <Button
                 variant="outline"
                 onClick={() => {
