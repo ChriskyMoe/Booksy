@@ -1,6 +1,5 @@
 import { formatCurrency } from '@/lib/utils'
-import { Card, CardContent } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 interface DashboardStatsProps {
   data: {
@@ -17,30 +16,34 @@ export default function DashboardStats({ data }: DashboardStatsProps) {
     {
       label: 'Total Income',
       value: formatCurrency(data.income, data.currency),
-      icon: TrendingUp,
-      className: 'text-success',
-      iconBg: 'bg-success/10',
+      icon: ArrowUpRight,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+      iconBg: 'bg-white',
     },
     {
       label: 'Total Expenses',
       value: formatCurrency(data.expenses, data.currency),
-      icon: TrendingDown,
-      className: 'text-destructive',
-      iconBg: 'bg-destructive/10',
+      icon: ArrowDownRight,
+      color: 'text-rose-600',
+      bg: 'bg-rose-50',
+      iconBg: 'bg-white',
     },
     {
       label: 'Net Profit',
       value: formatCurrency(data.profit, data.currency),
       icon: data.profit >= 0 ? TrendingUp : TrendingDown,
-      className: data.profit >= 0 ? 'text-success' : 'text-destructive',
-      iconBg: data.profit >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+      color: data.profit >= 0 ? 'text-emerald-600' : 'text-rose-600',
+      bg: data.profit >= 0 ? 'bg-emerald-50' : 'bg-rose-50',
+      iconBg: 'bg-white',
     },
     {
       label: 'Cash Balance',
       value: formatCurrency(data.cashBalance, data.currency),
       icon: Wallet,
-      className: data.cashBalance >= 0 ? 'text-success' : 'text-destructive',
-      iconBg: data.cashBalance >= 0 ? 'bg-success/10' : 'bg-destructive/10',
+      color: 'text-primary',
+      bg: 'bg-primary/5',
+      iconBg: 'bg-white',
     },
   ]
 
@@ -49,16 +52,19 @@ export default function DashboardStats({ data }: DashboardStatsProps) {
       {stats.map((stat) => {
         const Icon = stat.icon
         return (
-          <div key={stat.label} className="stat-card">
+          <div
+            key={stat.label}
+            className={`rounded-2xl p-6 shadow-premium border border-transparent hover:border-black/5 transition-premium ${stat.bg}`}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl font-bold mt-1 ${stat.className}`}>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">{stat.label}</p>
+                <p className={`text-2xl font-black mt-2 ${stat.color}`}>
                   {stat.value}
                 </p>
               </div>
-              <div className={`h-12 w-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
-                <Icon className={`h-6 w-6 ${stat.className}`} />
+              <div className={`h-12 w-12 rounded-xl shadow-sm ${stat.iconBg} flex items-center justify-center ${stat.color}`}>
+                <Icon className="h-6 w-6" />
               </div>
             </div>
           </div>

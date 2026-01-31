@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusiness } from "@/lib/actions/business";
 import { CurrencySummaryCards } from "@/components/CurrencySummaryCards";
 import { CurrencyMainConverter } from "@/components/CurrencyMainConverter";
-import { CurrencyChart } from "@/components/CurrencyChart";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
 
@@ -17,16 +16,13 @@ export default async function CurrencyConverterPage() {
     redirect("/login");
   }
 
-  const businessResult = await getBusiness();
-  if (businessResult.error || !businessResult.data) {
+  const { data: business, error: businessError } = await getBusiness();
+  if (businessError || !business) {
     redirect("/setup");
   }
-  const business = businessResult.data;
-  const businessName = business?.name;
-  const avatarUrl = business?.avatar_url;
 
   return (
-    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+    <AuthenticatedLayout businessName={business.name} avatarUrl={business.avatar_url || undefined}>
       <AppHeader
         title="Currency Converter"
         subtitle="Finance-grade real-time conversion and historical trends"
@@ -34,7 +30,6 @@ export default async function CurrencyConverterPage() {
       <div className="p-6 max-w-5xl mx-auto space-y-8">
         <CurrencySummaryCards />
         <CurrencyMainConverter />
-        <CurrencyChart />
       </div>
     </AuthenticatedLayout>
   );

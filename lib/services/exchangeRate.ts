@@ -1,5 +1,5 @@
-const API_KEY = 'ddb9e001d3fc1014a8161b6c'
-const BASE_URL = 'https://v6.exchangerate-api.com/v6'
+const API_KEY = process.env.EXCHANGE_RATE_API_KEY || '85d20e53293ae63250dec55a'
+const BASE_URL = process.env.EXCHANGE_RATE_BASE_URL || 'https://v6.exchangerate-api.com/v6'
 
 export interface ExchangeRateResponse {
     conversion_rates: Record<string, number>

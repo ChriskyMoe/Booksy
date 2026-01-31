@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SearchableCurrencySelect } from '@/components/SearchableCurrencySelect'
 import { ArrowLeftRight, Loader2, Info } from 'lucide-react'
+import { CurrencyChart } from './CurrencyChart'
 
 // Map currency codes to symbols/flags placeholders
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -148,6 +149,19 @@ export function CurrencyMainConverter() {
                         <span className="text-sm font-medium">Syncing live rates...</span>
                     </div>
                 )}
+
+                {/* Integrated Chart Section */}
+                <div className="mt-12 pt-10 border-t border-border/40">
+                    <div className="mb-6">
+                        <h3 className="text-lg font-bold tracking-tight text-foreground">Market Trends</h3>
+                        <p className="text-xs text-muted-foreground">Real-time performance of {fromCurrency} to {toCurrency}</p>
+                    </div>
+                    <CurrencyChart
+                        fromCurrency={fromCurrency}
+                        toCurrency={toCurrency}
+                        showControls={false}
+                    />
+                </div>
             </CardContent>
         </Card>
     )
