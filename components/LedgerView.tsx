@@ -1,25 +1,25 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { getJournalEntries, voidJournalEntry } from '@/lib/actions/journal'
-import { getCategories } from '@/lib/actions/categories'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Button } from './ui/button'
-import AddTransactionButton from './AddTransactionButton' // Import the button
-import { Card, CardContent } from '@/components/ui/card' // Import Card for total balance display
+import { Card, CardContent } from '@/components/ui/card'
 
-// A type for the processed, display-friendly entry
+type DisplayLine = {
+  accountName: string
+  debit: number
+  credit: number
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+}
+
 type DisplayEntry = {
   id: string
   date: string
   description: string
   status: 'posted' | 'void' | 'draft'
-  lines: {
-    accountName: string
-    debit: number
-    credit: number
-    type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
-  }[]
+  lines: DisplayLine[]
 }
 
 export default function LedgerView() {
@@ -35,7 +35,6 @@ export default function LedgerView() {
     setLoading(true)
     setError(null)
     const result = await getJournalEntries()
-
     if (result.error) {
       setError(result.error)
     } else if (result.data) {
@@ -45,14 +44,17 @@ export default function LedgerView() {
   }
 
   const handleVoid = async (id: string) => {
-    if (!confirm('Are you sure you want to void this entry? This will create a reversing entry and cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to void this transaction? This will create a reversing entry and cannot be undone.'
+      )
+    ) {
       return
     }
     const result = await voidJournalEntry(id)
     if (result.error) {
-      alert(`Failed to void entry: ${result.error}`)
+      alert(`Failed to void: ${result.error}`)
     } else {
-      // Refresh data to show the changes
       loadData()
     }
   }
@@ -62,35 +64,27 @@ export default function LedgerView() {
       id: entry.id,
       date: entry.transaction_date,
       description: entry.description,
-      status: entry.status,
-      lines: entry.journal_lines.map((line: any) => ({
-        accountName: line.account?.name || 'Unknown',
-        debit: line.type === 'debit' ? line.amount : 0,
-        credit: line.type === 'credit' ? line.amount : 0,
-        type: line.account?.type || 'expense',
-      })),
+      status: entry.status ?? 'posted',
+      lines: (entry.journal_lines ?? []).map((line: any) => {
+        const lineDirection = line.line_type ?? line.type
+        const amount = Number(line.amount) ?? 0
+        return {
+          accountName: line.account?.name || 'Unknown',
+          debit: lineDirection === 'debit' ? amount : 0,
+          credit: lineDirection === 'credit' ? amount : 0,
+          type: (line.account?.type || 'expense') as DisplayLine['type'],
+        }
+      }),
     }))
   }, [journalEntries])
 
   const totalBalance = useMemo(() => {
     let balance = 0
-    processedEntries.forEach(entry => {
-      // Only consider non-voided entries for the total balance
+    processedEntries.forEach((entry) => {
       if (entry.status !== 'void') {
-        entry.lines.forEach(line => {
-          switch (line.type) {
-            case 'asset':
-            case 'expense':
-              balance += (line.debit - line.credit)
-              break
-            case 'liability':
-            case 'equity':
-            case 'revenue':
-              balance += (line.credit - line.debit)
-              break
-            default:
-              // For unknown types, we might just ignore or log a warning
-              break
+        entry.lines.forEach((line) => {
+          if (line.type === 'asset') {
+            balance += line.debit - line.credit
           }
         })
       }
@@ -99,129 +93,168 @@ export default function LedgerView() {
   }, [processedEntries])
 
   if (loading) {
-    return <div className="text-center py-12">Loading ledger...</div>
+    return <div className="text-center py-12">Loading...</div>
   }
-  
   if (error) {
-    return <div className="text-center py-12 text-red-500">{error}</div>
+    return <div className="text-center py-12 text-destructive">{error}</div>
   }
 
   return (
     <div className="space-y-4">
-      {/* Title and Action Buttons */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">General Ledger</h1>
-        <div className="flex gap-2">
-          <Button onClick={loadData} variant="outline" size="sm">Refresh</Button>
-          <AddTransactionButton />
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h1 className="text-2xl font-bold">Ledger</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={loadData} variant="outline" size="sm">
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/transactions">Add transaction →</Link>
+          </Button>
         </div>
       </div>
 
-      {/* Total Balance Card */}
       <Card className="p-4">
         <CardContent className="flex justify-between items-center p-0">
-          <h2 className="text-lg font-semibold text-foreground">Total Balance</h2>
-          <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+          <h2 className="text-lg font-semibold text-foreground">Cash balance</h2>
+          <p
+            className={`text-2xl font-bold ${
+              totalBalance >= 0 ? 'text-success' : 'text-destructive'
+            }`}
+          >
             {formatCurrency(totalBalance, 'USD')}
           </p>
         </CardContent>
       </Card>
 
-      {/* Journal Entries Table */}
-      <div className="rounded-lg bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Description
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Account
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Debit
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Credit
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-card divide-y divide-border">
-              {processedEntries.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
-                    No transactions found
-                  </td>
-                </tr>
-              ) : (
-                processedEntries.map((entry, entryIndex) => (
-                  <>
-                    {entry.lines.map((line, lineIndex) => (
-                      <tr key={`${entry.id}-${lineIndex}`} className={`hover:bg-accent ${entry.status === 'void' ? 'bg-red-500/10 text-muted-foreground' : ''}`}>
-                        {/* Show date and description only on the first line of an entry */}
-                        {lineIndex === 0 ? (
-                          <>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm row-span={entry.lines.length}">
-                              {formatDate(entry.date)}
-                            </td>
-                            <td className="px-4 py-3 text-sm row-span={entry.lines.length}">
-                                {entry.description}
-                                {entry.status === 'void' && <span className="ml-2 text-xs font-semibold text-red-500">(VOID)</span>}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3"></td>
-                            <td className="px-4 py-3"></td>
-                          </>
-                        )}
-                        
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">{line.accountName}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-mono">
-                          {line.debit > 0 ? formatCurrency(line.debit, 'USD') : ''}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-mono">
-                          {line.credit > 0 ? formatCurrency(line.credit, 'USD') : ''}
-                        </td>
+      <LedgerTableView entries={processedEntries} onVoid={handleVoid} />
+    </div>
+  )
+}
 
-                        {/* Show actions only on the first line of an entry */}
-                        {lineIndex === 0 ? (
-                           <td className="px-4 py-3 text-center row-span={entry.lines.length}">
-                             {entry.status !== 'void' && (
-                               <Button
-                                 variant="destructive"
-                                 size="sm"
-                                 onClick={() => handleVoid(entry.id)}
-                               >
-                                 Void
-                               </Button>
-                             )}
-                           </td>
-                        ) : (
-                            <td className="px-4 py-3"></td>
-                        )}
+function LedgerTableView({
+  entries,
+  onVoid,
+}: {
+  entries: DisplayEntry[]
+  onVoid: (entryId: string) => void
+}) {
+  const isCash = (accountName: string) => accountName === 'Cash'
+
+  return (
+    <div className="rounded-lg bg-card shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="bg-muted">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Date
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Description
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Account
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Debit
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Credit
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-card divide-y divide-border">
+            {entries.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                  No ledger entries yet
+                </td>
+              </tr>
+            ) : (
+              entries.map((entry) => (
+                <React.Fragment key={entry.id}>
+                  {entry.lines.map((line, lineIdx) => {
+                    const cashDebit = isCash(line.accountName) && line.debit > 0
+                    const cashCredit = isCash(line.accountName) && line.credit > 0
+                    const isFirst = lineIdx === 0
+                    const isLast = lineIdx === entry.lines.length - 1
+                    return (
+                      <tr
+                        key={`${entry.id}-${lineIdx}`}
+                        className={`hover:bg-accent/50 ${
+                          !isLast ? '' : 'border-b-2 border-border'
+                        }`}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">
+                          {isFirst ? formatDate(entry.date) : ''}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {isFirst ? (
+                            <>
+                              {entry.description}
+                              {entry.status === 'void' && (
+                                <span className="ml-2 text-xs font-semibold text-destructive">
+                                  (Void)
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            ''
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">{line.accountName}</td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {line.debit > 0 ? (
+                            <span
+                              className={
+                                cashDebit ? 'font-medium text-success' : 'text-foreground'
+                              }
+                            >
+                              {cashDebit ? '+' : ''}
+                              {formatCurrency(line.debit, 'USD')}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {line.credit > 0 ? (
+                            <span
+                              className={
+                                cashCredit ? 'font-medium text-destructive' : 'text-foreground'
+                              }
+                            >
+                              {cashCredit ? '−' : ''}
+                              {formatCurrency(line.credit, 'USD')}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {isFirst && entry.status !== 'void' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => onVoid(entry.id)}
+                            >
+                              Void
+                            </Button>
+                          )}
+                        </td>
                       </tr>
-                    ))}
-                    {/* Separator line between entries */}
-                    {entryIndex < processedEntries.length -1 && (
-                      <tr>
-                        <td colSpan={6} className="p-0 h-1 bg-border"></td>
-                      </tr>
-                    )}
-                  </>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    )
+                  })}
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
+

@@ -131,6 +131,106 @@ export async function createSimpleTransaction(transaction: {
   })
 }
 
+export async function updateSimpleTransaction(
+  journalEntryId: string,
+  transaction: {
+    category_id: string
+    amount: number
+    currency: string
+    transaction_date: string
+    description: string
+    payment_method: 'cash' | 'card' | 'transfer' | 'other'
+  }
+) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id, base_currency')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!business) return { error: 'Business not found' }
+
+  const { data: existingEntry, error: fetchError } = await supabase
+    .from('journal_entries')
+    .select('id, business_id, transaction_date, description, status')
+    .eq('id', journalEntryId)
+    .eq('business_id', business.id)
+    .single()
+
+  if (fetchError || !existingEntry) return { error: 'Journal entry not found' }
+  if (existingEntry.status === 'void') return { error: 'Cannot edit a voided transaction' }
+
+  const { data: existingLines } = await supabase
+    .from('journal_lines')
+    .select('id, account_id, type, amount')
+    .eq('journal_entry_id', journalEntryId)
+
+  if (!existingLines?.length) return { error: 'Journal entry has no lines' }
+
+  const { data: category } = await supabase
+    .from('categories')
+    .select('id, name, type')
+    .eq('id', transaction.category_id)
+    .single()
+
+  if (!category) return { error: 'Category not found' }
+
+  const cashAccountResult = await getAccountByName('Cash', business.id)
+  const categoryAccountResult = await getAccountByName(category.name, business.id)
+
+  if (cashAccountResult.error || !cashAccountResult.data) return { error: 'Cash account not found' }
+  if (categoryAccountResult.error || !categoryAccountResult.data)
+    return { error: `Account for category "${category.name}" not found` }
+
+  const cashAccountId = cashAccountResult.data.id
+  const categoryAccountId = categoryAccountResult.data.id
+
+  // Update journal entry header
+  const { error: updateEntryError } = await supabase
+    .from('journal_entries')
+    .update({
+      transaction_date: transaction.transaction_date,
+      description: transaction.description,
+    })
+    .eq('id', journalEntryId)
+    .eq('business_id', business.id)
+
+  if (updateEntryError) {
+    console.error('Error updating journal entry:', updateEntryError)
+    return { error: 'Failed to update transaction' }
+  }
+
+  // Update each line: match by account (Cash vs category) and set new amount/account_id
+  for (const line of existingLines) {
+    const isCashLine = line.account_id === cashAccountId
+    const newAccountId = isCashLine ? cashAccountId : categoryAccountId
+    const newType = isCashLine
+      ? category.type === 'income'
+        ? 'debit'
+        : 'credit'
+      : category.type === 'income'
+        ? 'credit'
+        : 'debit'
+    const { error: lineError } = await supabase
+      .from('journal_lines')
+      .update({ account_id: newAccountId, type: newType, amount: transaction.amount })
+      .eq('id', line.id)
+
+    if (lineError) {
+      console.error('Error updating journal line:', lineError)
+      return { error: 'Failed to update transaction lines' }
+    }
+  }
+
+  return { data: { id: journalEntryId } }
+}
 
 export async function getJournalEntries(filters?: {
   // Filters can be added here later
@@ -154,16 +254,49 @@ export async function getJournalEntries(filters?: {
     return { error: 'Business not found' }
   }
 
-  const { data, error } = await supabase
+  // Fetch entries with lines; use separate account fetch so journal_lines.type (debit/credit)
+  // is not overwritten by accounts.type (asset/expense) in the response.
+  const { data: entriesData, error } = await supabase
     .from('journal_entries')
-    .select('*, journal_lines(*, account:accounts(name, type))')
+    .select('*, journal_lines(*)')
     .eq('business_id', business.id)
     .order('transaction_date', { ascending: false })
 
   if (error) {
     return { error: error.message }
   }
-  
+
+  if (!entriesData?.length) {
+    return { data: entriesData ?? [] }
+  }
+
+  // Get all unique account IDs and fetch account names/types
+  const accountIds = new Set<string>()
+  entriesData.forEach((entry: any) => {
+    entry.journal_lines?.forEach((line: any) => {
+      if (line.account_id) accountIds.add(line.account_id)
+    })
+  })
+
+  const { data: accountsData } = await supabase
+    .from('accounts')
+    .select('id, name, type')
+    .in('id', Array.from(accountIds))
+
+  const accountsMap = new Map(
+    (accountsData ?? []).map((a: any) => [a.id, { name: a.name, type: a.type }])
+  )
+
+  // Attach account info to each line; keep journal line's type as line_type (debit/credit).
+  const data = entriesData.map((entry: any) => ({
+    ...entry,
+    journal_lines: (entry.journal_lines ?? []).map((line: any) => ({
+      ...line,
+      line_type: line.type, // debit | credit from journal_lines
+      account: accountsMap.get(line.account_id) ?? { name: 'Unknown', type: 'expense' },
+    })),
+  }))
+
   return { data }
 }
 

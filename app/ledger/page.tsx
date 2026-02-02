@@ -24,7 +24,7 @@ export default async function LedgerPage() {
     <AuthenticatedLayout>
       <AppHeader
         title="Ledger"
-        subtitle="View all transactions with filters"
+        subtitle="Cash activity and ledger details (add or edit on Transactions)"
       />
       <div className="p-6">
         <LedgerView />

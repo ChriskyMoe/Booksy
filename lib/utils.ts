@@ -37,8 +37,9 @@ export function processJournalForDisplay(entry: any) {
     }
   }
   
-  const isDebit = mainLine.type === 'debit';
-  const accountType = mainLine.account.type; // 'income', 'expense', 'asset', etc.
+  const lineDirection = mainLine.line_type ?? mainLine.type; // debit | credit from journal_lines
+  const isDebit = lineDirection === 'debit';
+  const accountType = mainLine.account?.type; // 'income', 'expense', 'asset', etc.
   
   let displayType: 'income' | 'expense' = 'expense';
   if (accountType === 'revenue') {

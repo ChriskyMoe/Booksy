@@ -18,9 +18,10 @@ interface DisplayTransaction {
 
 interface TransactionItemProps {
   displayTransaction: DisplayTransaction
+  onEdit?: (t: DisplayTransaction) => void
 }
 
-export default function TransactionItem({ displayTransaction }: TransactionItemProps) {
+export default function TransactionItem({ displayTransaction, onEdit }: TransactionItemProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -72,15 +73,27 @@ export default function TransactionItem({ displayTransaction }: TransactionItemP
         {formatCurrency(displayTransaction.amount, 'USD')}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        <Button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-          Void
-        </Button>
+        <span className="flex items-center justify-end gap-2">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:text-primary hover:bg-primary/10"
+              onClick={() => onEdit(displayTransaction)}
+            >
+              Edit
+            </Button>
+          )}
+          <Button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            Void
+          </Button>
+        </span>
       </td>
     </tr>
   )
