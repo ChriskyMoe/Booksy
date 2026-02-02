@@ -1,24 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createSimpleTransaction, updateSimpleTransaction } from "@/lib/actions/journal";
+import { createTransaction } from "@/lib/actions/transactions";
 import { getCategories } from "@/lib/actions/categories";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export interface DisplayTransactionForEdit {
-  id: string;
-  date: string;
-  description: string;
-  accountName: string;
-  type: "income" | "expense";
-  amount: number;
-}
-
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  editTransaction?: DisplayTransactionForEdit | null;
 }
 
 const PAYMENT_METHODS = ["cash", "card", "transfer", "other"] as const;
@@ -38,7 +28,6 @@ const CURRENCIES = [
 export default function TransactionModal({
   isOpen,
   onClose,
-  editTransaction = null,
 }: TransactionModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -62,44 +51,12 @@ export default function TransactionModal({
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && editTransaction) {
-      setFormData((prev) => ({
-        ...prev,
-        amount: String(editTransaction.amount),
-        transaction_date: editTransaction.date,
-        notes: editTransaction.description || "",
-        client_vendor: "",
-      }));
-    } else if (isOpen && !editTransaction) {
-      setFormData({
-        category_id: "",
-        amount: "",
-        currency: "USD",
-        transaction_date: new Date().toISOString().split("T")[0],
-        payment_method: "cash",
-        client_vendor: "",
-        notes: "",
-      });
-    }
-  }, [isOpen, editTransaction]);
-
   const loadCategories = async () => {
     const result = await getCategories();
     if (result.data) {
       setCategories(result.data);
     }
   };
-
-  useEffect(() => {
-    if (isOpen && editTransaction && categories.length) {
-      const match = categories.find((c) => c.name === editTransaction!.accountName);
-      setFormData((prev) => ({
-        ...prev,
-        category_id: match?.id ?? prev.category_id,
-      }));
-    }
-  }, [isOpen, editTransaction, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,51 +69,32 @@ export default function TransactionModal({
       return;
     }
 
-    const description = formData.notes || formData.client_vendor || "Transaction";
+    const result = await createTransaction({
+      category_id: formData.category_id,
+      amount: parseFloat(formData.amount),
+      currency: formData.currency,
+      transaction_date: formData.transaction_date,
+      payment_method: formData.payment_method,
+      client_vendor: formData.client_vendor || undefined,
+      notes: formData.notes || undefined,
+    });
 
-    if (editTransaction) {
-      const result = await updateSimpleTransaction(editTransaction.id, {
-        category_id: formData.category_id,
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        transaction_date: formData.transaction_date,
-        payment_method: formData.payment_method,
-        description,
-      });
-      if (result.error) {
-        setError(result.error);
-        setLoading(false);
-      } else {
-        setLoading(false);
-        onClose();
-        router.refresh();
-      }
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
     } else {
-      const result = await createSimpleTransaction({
-        category_id: formData.category_id,
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        transaction_date: formData.transaction_date,
-        payment_method: formData.payment_method,
-        description,
+      setFormData({
+        category_id: "",
+        amount: "",
+        currency: "USD",
+        transaction_date: new Date().toISOString().split("T")[0],
+        payment_method: "cash",
+        client_vendor: "",
+        notes: "",
       });
-      if (result.error) {
-        setError(result.error);
-        setLoading(false);
-      } else {
-        setFormData({
-          category_id: "",
-          amount: "",
-          currency: "USD",
-          transaction_date: new Date().toISOString().split("T")[0],
-          payment_method: "cash",
-          client_vendor: "",
-          notes: "",
-        });
-        setLoading(false);
-        onClose();
-        router.refresh();
-      }
+      setLoading(false);
+      onClose();
+      router.refresh();
     }
   };
 
@@ -171,7 +109,7 @@ export default function TransactionModal({
         />
         <div className="relative w-full max-w-md rounded-lg bg-card p-6 shadow-xl">
           <h3 className="mb-4 text-lg font-semibold text-foreground">
-            {editTransaction ? "Edit Transaction" : "Add Transaction"}
+            Add Transaction
           </h3>
 
           {error && (
@@ -303,7 +241,7 @@ export default function TransactionModal({
                 }
                 rows={3}
                 className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
-                placeholder="Optional notes for transaction"
+                placeholder="Optional notes"
               />
             </div>
 
@@ -319,13 +257,7 @@ export default function TransactionModal({
                 type="submit"
                 disabled={loading}
               >
-                {loading
-                  ? editTransaction
-                    ? "Saving..."
-                    : "Adding..."
-                  : editTransaction
-                    ? "Save changes"
-                    : "Add Transaction"}
+                {loading ? "Adding..." : "Add Transaction"}
               </Button>
             </div>
           </form>

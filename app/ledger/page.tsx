@@ -24,11 +24,8 @@ export default async function LedgerPage() {
   const avatarUrl = business?.avatar_url;
 
   return (
-    <AuthenticatedLayout>
-      <AppHeader
-        title="Ledger"
-        subtitle="Cash activity and ledger details (add or edit on Transactions)"
-      />
+    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+      <AppHeader title="Ledger" subtitle="View all transactions with filters" />
       <div className="p-6">
         <LedgerView />
       </div>

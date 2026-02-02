@@ -1,99 +1,79 @@
 'use client'
 
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { voidJournalEntry } from '@/lib/actions/journal' // Use voidJournalEntry
+import { deleteTransaction } from '@/lib/actions/transactions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-interface DisplayTransaction {
-  id: string
-  date: string
-  description: string
-  accountName: string
-  type: 'income' | 'expense'
-  amount: number
-}
-
 interface TransactionItemProps {
-  displayTransaction: DisplayTransaction
-  onEdit?: (t: DisplayTransaction) => void
+  transaction: {
+    id: string
+    transaction_date: string
+    category: { name: string; type: 'income' | 'expense' } | null
+    client_vendor: string | null
+    payment_method: string
+    base_amount: number
+    currency: string
+  }
 }
 
-export default function TransactionItem({ displayTransaction, onEdit }: TransactionItemProps) {
+export default function TransactionItem({ transaction }: TransactionItemProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to void this transaction? This will create a reversing entry.')) {
+    if (!confirm('Are you sure you want to delete this transaction?')) {
       return
     }
 
     setIsDeleting(true)
-    const result = await voidJournalEntry(displayTransaction.id) // Use voidJournalEntry
-    if (result.error) {
-      alert(`Failed to void transaction: ${result.error}`)
-      setIsDeleting(false) // Re-enable button if voiding fails
-    } else {
-      router.refresh()
-    }
+    await deleteTransaction(transaction.id)
+    router.refresh()
   }
 
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-        {formatDate(displayTransaction.date)}
+        {formatDate(transaction.transaction_date)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <Badge
-          variant={displayTransaction.type === 'income' ? 'default' : 'destructive'}
+          variant={transaction.category?.type === 'income' ? 'default' : 'destructive'}
           className={
-            displayTransaction.type === 'income'
+            transaction.category?.type === 'income'
               ? 'bg-success/10 text-success hover:bg-success/20'
               : ''
           }
         >
-          {displayTransaction.accountName || 'Uncategorized'}
+          {transaction.category?.name || 'Uncategorized'}
         </Badge>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-        {displayTransaction.description || '-'}
+        {transaction.client_vendor || '-'}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground capitalize">
-        {/* Payment method is no longer directly on processed transactions */}
-        -
+        {transaction.payment_method}
       </td>
       <td
         className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${
-          displayTransaction.type === 'income' ? 'text-success' : 'text-destructive'
+          transaction.category?.type === 'income' ? 'text-success' : 'text-destructive'
         }`}
       >
-        {displayTransaction.type === 'income' ? '+' : '-'}
-        {formatCurrency(displayTransaction.amount, 'USD')}
+        {transaction.category?.type === 'income' ? '+' : '-'}
+        {formatCurrency(transaction.base_amount, transaction.currency)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        <span className="flex items-center justify-end gap-2">
-          {onEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary hover:text-primary hover:bg-primary/10"
-              onClick={() => onEdit(displayTransaction)}
-            >
-              Edit
-            </Button>
-          )}
-          <Button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            Void
-          </Button>
-        </span>
+        <Button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          Delete
+        </Button>
       </td>
     </tr>
   )
