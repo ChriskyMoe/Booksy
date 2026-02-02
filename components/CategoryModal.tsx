@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createCategory, updateCategory } from '@/lib/actions/categories'
-import { createTransaction } from '@/lib/actions/transactions'
+import { createSimpleTransaction } from '@/lib/actions/journal' // Updated import
 import { useRouter } from 'next/navigation'
 
 interface CategoryModalProps {
@@ -95,13 +95,13 @@ export default function CategoryModal({ isOpen, onClose, editCategory }: Categor
 
             // Create initial transaction if requested
             if (!editCategory && includeTransaction && categoryId && amount) {
-                const txResult = await createTransaction({
+                const txResult = await createSimpleTransaction({ // Changed to createSimpleTransaction
                     category_id: categoryId,
                     amount: parseFloat(amount),
                     currency,
                     transaction_date: transactionDate,
                     payment_method: paymentMethod,
-                    notes: notes || undefined,
+                    description: notes || `Initial transaction for ${categoryName}`, // Using notes or default description
                 })
 
                 if (txResult.error) {

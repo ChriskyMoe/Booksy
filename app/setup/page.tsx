@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createBusiness } from '@/lib/actions/business'
 
 const BUSINESS_TYPES = [
   'Retail',
@@ -27,51 +27,18 @@ export default function SetupPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const result = await createBusiness(formData)
 
-    if (!user) {
-      setError('You must be logged in')
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
       return
-    }
-
-    // Create business
-    const { data: business, error: businessError } = await supabase
-      .from('businesses')
-      .insert({
-        user_id: user.id,
-        name: formData.name,
-        business_type: formData.businessType || null,
-        base_currency: formData.baseCurrency,
-        fiscal_year_start_month: formData.fiscalYearStartMonth,
-        fiscal_year_start_day: formData.fiscalYearStartDay,
-      })
-      .select()
-      .single()
-
-    if (businessError) {
-      setError(businessError.message)
-      setLoading(false)
-      return
-    }
-
-    // Create default categories
-    const { error: categoryError } = await supabase.rpc('create_default_categories', {
-      business_uuid: business.id,
-    })
-
-    if (categoryError) {
-      console.error('Error creating default categories:', categoryError)
-      // Continue anyway - categories can be created manually
     }
 
     router.push('/dashboard')

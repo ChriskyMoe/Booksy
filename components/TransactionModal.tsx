@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createTransaction } from "@/lib/actions/transactions";
+import { createSimpleTransaction } from "@/lib/actions/journal";
 import { getCategories } from "@/lib/actions/categories";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -69,14 +69,15 @@ export default function TransactionModal({
       return;
     }
 
-    const result = await createTransaction({
+    const description = formData.notes || formData.client_vendor || 'Transaction';
+
+    const result = await createSimpleTransaction({
       category_id: formData.category_id,
       amount: parseFloat(formData.amount),
       currency: formData.currency,
       transaction_date: formData.transaction_date,
       payment_method: formData.payment_method,
-      client_vendor: formData.client_vendor || undefined,
-      notes: formData.notes || undefined,
+      description: description
     });
 
     if (result.error) {
@@ -241,7 +242,7 @@ export default function TransactionModal({
                 }
                 rows={3}
                 className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-ring sm:text-sm"
-                placeholder="Optional notes"
+                placeholder="Optional notes for transaction"
               />
             </div>
 
