@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
+import { is } from "date-fns/locale";
+import all from "gsap/all";
+import image from "next/image";
+import { type } from "os";
+import { use } from "react";
+import { buffer } from "stream/consumers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -48,7 +54,7 @@ export async function POST(request: NextRequest) {
   "merchant_name": "name of the merchant/store",
   "date": "date in YYYY-MM-DD format",
   "total_amount": "total amount as a number",
-  "currency": "currency code (e.g., USD, EUR)",
+  "currency": "currency code (e.g., USD, EUR, GBP, JPY, THB). If you see a $ symbol, use USD. If you see € symbol, use EUR. If you see £ symbol, use GBP. If you see ¥ symbol, use JPY. If you see ฿ symbol, use THB. Default to USD if no currency symbol or text is visible.",
   "category": "suggested category (e.g., Food, Transportation, Office Supplies)",
   "items": [
     {
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
   ],
   "tax_amount": "tax amount if available",
-  "payment_method": "payment method if visible"
+  "payment_method": "payment method if visible"`
 }
 
 Extract all visible information. If a field is not visible, use null.`
@@ -80,7 +86,7 @@ Extract all visible information. If a field is not visible, use null.`
   "subtotal": "subtotal before tax",
   "tax_amount": "tax amount",
   "total_amount": "total amount",
-  "currency": "currency code (e.g., USD, EUR)",
+  "currency": "currency code (e.g., USD, EUR, GBP, JPY, THB). If you see a $ symbol, use USD. If you see € symbol, use EUR. If you see £ symbol, use GBP. If you see ¥ symbol, use JPY. If you see ฿ symbol, use THB. Default to USD if no currency symbol or text is visible.",
   "notes": "any additional notes or terms"
 }
 
