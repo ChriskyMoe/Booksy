@@ -3,25 +3,45 @@ import { createClient } from '@/lib/supabase/server'
 import { getBusiness } from '@/lib/actions/business'
 import TransactionsContent from '@/components/TransactionsContent'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getBusiness } from "@/lib/actions/business";
+import TransactionList from "@/components/TransactionList";
+import AddTransactionButton from "@/components/AddTransactionButton";
+import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export default async function TransactionsPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  const businessResult = await getBusiness()
+  const businessResult = await getBusiness();
   if (businessResult.error || !businessResult.data) {
-    redirect('/setup')
+    redirect("/setup");
   }
+  const business = businessResult.data;
+  const businessName = business?.name;
+  const avatarUrl = business?.avatar_url;
 
   return (
     <AuthenticatedLayout>
       <TransactionsContent />
+    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+      <AppHeader
+        title="Transactions"
+        subtitle="Manage your income and expenses"
+      >
+        <AddTransactionButton />
+      </AppHeader>
+      <div className="p-6">
+        <TransactionList />
+      </div>
     </AuthenticatedLayout>
-  )
+  );
 }
