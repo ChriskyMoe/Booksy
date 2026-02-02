@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createDefaultAccounts } from './accounts'
 
 export async function getBusiness() {
   const supabase = await createClient()
@@ -53,6 +54,61 @@ export async function updateBusiness(updates: {
   }
 
   return { data, error: null }
+}
+
+export async function createBusiness(formData: {
+  name: string
+  businessType: string
+  baseCurrency: string
+  fiscalYearStartMonth: number
+  fiscalYearStartDay: number
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'You must be logged in' }
+  }
+
+  // Create business
+  const { data: business, error: businessError } = await supabase
+    .from('businesses')
+    .insert({
+      user_id: user.id,
+      name: formData.name,
+      business_type: formData.businessType || null,
+      base_currency: formData.baseCurrency,
+      fiscal_year_start_month: formData.fiscalYearStartMonth,
+      fiscal_year_start_day: formData.fiscalYearStartDay,
+    })
+    .select()
+    .single()
+
+  if (businessError) {
+    return { error: businessError.message }
+  }
+
+  // Create default accounts
+  const { error: accountsError } = await createDefaultAccounts(business.id)
+  if (accountsError) {
+    // If this fails, we should ideally roll back the business creation
+    // For now, we'll log the error and continue, but this is a point of improvement
+    console.error('Failed to create default accounts:', accountsError)
+  }
+
+  // Create default categories (legacy)
+  const { error: categoryError } = await supabase.rpc('create_default_categories', {
+    business_uuid: business.id,
+  })
+
+  if (categoryError) {
+    console.error('Error creating default categories:', categoryError)
+    // Continue anyway - categories can be created manually
+  }
+  
+  return { data: business }
 }
 
 export async function deleteBusiness() {

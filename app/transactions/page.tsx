@@ -1,3 +1,8 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getBusiness } from '@/lib/actions/business'
+import TransactionsContent from '@/components/TransactionsContent'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getBusiness } from "@/lib/actions/business";
@@ -25,6 +30,8 @@ export default async function TransactionsPage() {
   const avatarUrl = business?.avatar_url;
 
   return (
+    <AuthenticatedLayout>
+      <TransactionsContent />
     <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
       <AppHeader
         title="Transactions"

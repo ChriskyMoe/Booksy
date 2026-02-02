@@ -2,7 +2,8 @@
 
 import OpenAI from 'openai'
 import { getDashboardData } from '@/lib/actions/dashboard'
-import { getTransactions } from '@/lib/actions/transactions'
+import { getJournalEntries } from '@/lib/actions/journal'
+import { processJournalForDisplay } from '@/lib/utils'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,14 +18,14 @@ export async function generateFinancialInsights(question?: string) {
 
   // Get financial data
   const dashboardResult = await getDashboardData()
-  const transactionsResult = await getTransactions()
+  const journalEntriesResult = await getJournalEntries() // Use new action
 
   if (dashboardResult.error || !dashboardResult.data) {
     return { error: 'Failed to load financial data' }
   }
 
   const { data: dashboard } = dashboardResult
-  const transactions = transactionsResult.data || []
+  const processedTransactions = (journalEntriesResult.data || []).map(processJournalForDisplay) // Process journal entries
 
   // Prepare context for AI
   const context = {
@@ -34,12 +35,12 @@ export async function generateFinancialInsights(question?: string) {
     cashBalance: dashboard.cashBalance,
     expenseBreakdown: dashboard.expenseBreakdown,
     currency: dashboard.currency,
-    transactionCount: transactions.length,
-    recentTransactions: transactions.slice(0, 10).map((t) => ({
-      date: t.transaction_date,
-      category: t.category?.name,
-      type: t.category?.type,
-      amount: t.base_amount,
+    transactionCount: processedTransactions.length, // Update transaction count
+    recentTransactions: processedTransactions.slice(0, 10).map((t) => ({ // Map to expected format
+      date: t.date,
+      category: t.accountName, // Use accountName as category
+      type: t.type,
+      amount: t.amount,
     })),
   }
 
@@ -115,14 +116,15 @@ export async function generateMonthlySummary(month: string, year: number) {
   const endDate = `${year}-${month.padStart(2, '0')}-31`
 
   const dashboardResult = await getDashboardData({ startDate, endDate })
-  const transactionsResult = await getTransactions({ startDate, endDate })
+  const journalEntriesResult = await getJournalEntries({ startDate, endDate }) // Use new action
 
   if (dashboardResult.error || !dashboardResult.data) {
     return { error: 'Failed to load financial data' }
   }
 
   const { data: dashboard } = dashboardResult
-  const transactions = transactionsResult.data || []
+  const processedTransactions = (journalEntriesResult.data || []).map(processJournalForDisplay) // Process journal entries
+  // 'processedTransactions' is not directly used in the prompt here, but keeping it consistent.
 
   if (!process.env.OPENAI_API_KEY) {
     return {

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createBusiness } from '@/lib/actions/business'
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -34,11 +37,10 @@ export default function SetupPage() {
     baseCurrency: "USD",
     fiscalYearStartMonth: 1,
     fiscalYearStartDay: 1,
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+  })
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

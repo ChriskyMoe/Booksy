@@ -1,12 +1,18 @@
-import { getTransactions } from '@/lib/actions/transactions'
+import { getJournalEntries } from '@/lib/actions/journal'
+import { processJournalForDisplay } from '@/lib/utils'
 import TransactionItem from './TransactionItem'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default async function TransactionList() {
-  const result = await getTransactions()
-  const transactions = result.data || []
+  const result = await getJournalEntries()
+  const journalEntries = result.data || []
+  
+  // Map journal entries to the simplified display format
+  const displayTransactions = journalEntries
+    .filter(entry => entry.status !== 'void') // Only show non-voided transactions
+    .map(processJournalForDisplay)
 
-  if (transactions.length === 0) {
+  if (displayTransactions.length === 0) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
@@ -32,7 +38,7 @@ export default async function TransactionList() {
                 Category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Client/Vendor
+                Description
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Payment Method
@@ -46,8 +52,8 @@ export default async function TransactionList() {
             </tr>
           </thead>
           <tbody className="bg-card divide-y divide-border">
-            {transactions.map((transaction) => (
-              <TransactionItem key={transaction.id} transaction={transaction} />
+            {displayTransactions.map((transaction) => (
+              <TransactionItem key={transaction.id} displayTransaction={transaction} />
             ))}
           </tbody>
         </table>
