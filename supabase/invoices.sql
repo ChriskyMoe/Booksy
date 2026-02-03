@@ -38,6 +38,8 @@ CREATE TABLE invoices (
   -- Additional
   notes TEXT,
   terms TEXT,
+  invoice_line_items JSONB DEFAULT '[]'::JSONB, -- Array of {catalogItemId: UUID, quantity: number}
+  invoice_catalog_item_ids UUID[] DEFAULT ARRAY[]::UUID[],
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -48,21 +50,7 @@ CREATE TABLE invoices (
 CREATE INDEX idx_invoices_user_id ON invoices(user_id);
 CREATE INDEX idx_invoices_status ON invoices(status);
 CREATE INDEX idx_invoices_issue_date ON invoices(issue_date);
-
--- Invoice items table
-CREATE TABLE invoice_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE NOT NULL,
-
-  description TEXT NOT NULL,
-  quantity DECIMAL(10, 2) NOT NULL DEFAULT 1,
-  unit_price DECIMAL(10, 2) NOT NULL,
-  amount DECIMAL(10, 2) NOT NULL,
-
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_invoice_items_invoice_id ON invoice_items(invoice_id);
+CREATE INDEX idx_invoices_catalog_item_ids ON invoices USING GIN (invoice_catalog_item_ids);
 
 -- Invoice payments table
 CREATE TABLE invoice_payments (
@@ -82,7 +70,6 @@ CREATE INDEX idx_invoice_payments_invoice_id ON invoice_payments(invoice_id);
 
 -- Enable RLS
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_payments ENABLE ROW LEVEL SECURITY;
 
 -- Policies for invoices
@@ -97,24 +84,6 @@ CREATE POLICY "Users can update their own invoices"
 
 CREATE POLICY "Users can delete their own invoices"
   ON invoices FOR DELETE USING (auth.uid() = user_id);
-
--- Policies for invoice_items
-CREATE POLICY "Users can view their invoice items"
-  ON invoice_items FOR SELECT
-  USING (invoice_id IN (SELECT id FROM invoices WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can manage their invoice items"
-  ON invoice_items FOR INSERT WITH CHECK (
-    invoice_id IN (SELECT id FROM invoices WHERE user_id = auth.uid())
-  );
-
-CREATE POLICY "Users can update their invoice items"
-  ON invoice_items FOR UPDATE
-  USING (invoice_id IN (SELECT id FROM invoices WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can delete their invoice items"
-  ON invoice_items FOR DELETE
-  USING (invoice_id IN (SELECT id FROM invoices WHERE user_id = auth.uid()));
 
 -- Policies for invoice_payments
 CREATE POLICY "Users can view their invoice payments"
@@ -133,3 +102,17 @@ CREATE POLICY "Users can update their invoice payments"
 CREATE POLICY "Users can delete their invoice payments"
   ON invoice_payments FOR DELETE
   USING (invoice_id IN (SELECT id FROM invoices WHERE user_id = auth.uid()));
+
+-- Update trigger for invoices
+CREATE OR REPLACE FUNCTION update_invoices_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_invoices_updated_at
+  BEFORE UPDATE ON invoices
+  FOR EACH ROW
+  EXECUTE FUNCTION update_invoices_updated_at();

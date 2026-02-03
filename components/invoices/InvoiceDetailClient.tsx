@@ -11,7 +11,6 @@ import {
 import { Invoice } from "@/types/invoice";
 import { Button } from "@/components/ui/button";
 import InvoicePreview from "@/components/invoices/InvoicePreview";
-import PaymentForm from "@/components/invoices/PaymentForm";
 
 export default function InvoiceDetailClient({
   invoiceId,
@@ -57,15 +56,6 @@ export default function InvoiceDetailClient({
     }
   };
 
-  const handlePaymentRecorded = async () => {
-    try {
-      const data = await getInvoice(invoiceId);
-      setInvoice(data);
-    } catch (error) {
-      console.error("Error refreshing invoice:", error);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -91,14 +81,11 @@ export default function InvoiceDetailClient({
             Invoice #{invoice.invoice_number}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/invoices/${invoiceId}/edit`}>
-            <Button variant="outline">Edit</Button>
-          </Link>
+        <div className="flex gap-3 items-center">
           <select
             value={invoice.status}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="px-4 py-2 border rounded-md bg-white text-sm font-medium"
+            className="px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-sm font-medium hover:border-gray-400 transition-colors"
           >
             <option value="draft">Draft</option>
             <option value="sent">Sent</option>
@@ -107,52 +94,31 @@ export default function InvoiceDetailClient({
             <option value="overdue">Overdue</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Link href={`/invoices/${invoiceId}/edit`}>
+            <Button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+              Edit
+            </Button>
+          </Link>
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            onClick={handleDelete}
+          >
             Delete
           </Button>
         </div>
       </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-6">
+        <div>
           <InvoicePreview invoice={invoice} />
         </div>
-        <div className="space-y-6">
-          <PaymentForm
-            invoice={invoice}
-            onPaymentRecorded={handlePaymentRecorded}
-          />
-
-          {invoice.payments && invoice.payments.length > 0 && (
-            <div className="bg-white border rounded-lg p-4">
-              <h3 className="font-semibold mb-4 text-gray-900">
-                Payment History
-              </h3>
-              <div className="space-y-3">
-                {invoice.payments.map((payment) => (
-                  <div
-                    key={payment.id}
-                    className="flex justify-between items-center text-sm pb-3 border-b last:border-b-0"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        ${payment.amount.toFixed(2)}
-                      </p>
-                      <p className="text-gray-600 text-xs">
-                        {new Date(payment.payment_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    {payment.payment_method && (
-                      <span className="text-gray-600 text-xs">
-                        {payment.payment_method}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+      </div>
+      <div className="flex justify-center pt-8">
+        <Button
+          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-12 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg w-full max-w-xs"
+          onClick={() => router.push("/invoices")}
+        >
+          Done
+        </Button>
       </div>
     </div>
   );

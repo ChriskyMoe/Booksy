@@ -3,15 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusiness } from "@/lib/actions/business";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import { AppHeader } from "@/components/layout/AppHeader";
-import EditInvoiceClient from "@/components/invoices/EditInvoiceClient";
+import InvoiceItemsContent from "@/components/invoices/InvoiceItemsContent";
 
-export default async function EditInvoicePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
+export default async function InvoiceItemsPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,13 +19,18 @@ export default async function EditInvoicePage({
   if (businessError || !business) {
     redirect("/setup");
   }
-  const businessName = business.name;
-  const avatarUrl = business.avatar_url;
 
   return (
-    <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
+    <AuthenticatedLayout
+      businessName={business.name}
+      avatarUrl={business.avatar_url || undefined}
+    >
+      <AppHeader
+        title="Invoice Items"
+        subtitle="Manage your products and services catalog"
+      />
       <div className="p-6">
-        <EditInvoiceClient invoiceId={id} />
+        <InvoiceItemsContent />
       </div>
     </AuthenticatedLayout>
   );
