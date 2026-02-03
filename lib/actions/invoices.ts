@@ -12,10 +12,20 @@ export async function createInvoice(data: CreateInvoicePayload) {
 
   if (!user) throw new Error("Not authenticated");
 
+  // Get business to link invoice
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!business) throw new Error("Business not found");
+
   const { data: invoice, error } = await supabase
     .from("invoices")
     .insert({
       user_id: user.id,
+      business_id: business.id,
       invoice_number: data.invoice_number,
       title: data.title,
       description: data.description,
@@ -174,6 +184,15 @@ export async function updateInvoice(
 
   if (!user) throw new Error("Not authenticated");
 
+  // Get business to verify ownership
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!business) throw new Error("Business not found");
+
   // Prepare the update object - exclude invoice_line_items for now
   const updateObj: any = {};
 
@@ -212,6 +231,7 @@ export async function updateInvoice(
     .update(updateObj)
     .eq("id", id)
     .eq("user_id", user.id)
+    .eq("business_id", business.id)
     .select()
     .single();
 
@@ -228,11 +248,21 @@ export async function updateInvoiceStatus(id: string, status: string) {
 
   if (!user) throw new Error("Not authenticated");
 
+  // Get business to verify ownership
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!business) throw new Error("Business not found");
+
   const { data, error } = await supabase
     .from("invoices")
     .update({ status })
     .eq("id", id)
     .eq("user_id", user.id)
+    .eq("business_id", business.id)
     .select()
     .single();
 
