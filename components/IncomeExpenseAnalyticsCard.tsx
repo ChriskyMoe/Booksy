@@ -506,33 +506,6 @@ export function IncomeExpenseAnalyticsCard({
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="bg-muted/30 rounded-2xl p-6 flex items-center justify-between border border-border/50">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <Wallet className="h-6 w-6" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold">Smart Insights</h4>
-              <p className="text-xs text-muted-foreground">
-                Your profit is {summary.netProfit >= 0 ? "up" : "down"} by{" "}
-                {Math.abs(
-                  Math.round(
-                    (summary.netProfit / (summary.totalExpenses || 1)) * 100
-                  )
-                )}
-                % compared to expenses.
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl font-bold text-xs px-5"
-          >
-            View Report
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

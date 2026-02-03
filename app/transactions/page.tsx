@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getBusiness } from "@/lib/actions/business";
+import { getTransactions } from "@/lib/actions/transactions";
 import TransactionList from "@/components/TransactionList";
 import AddTransactionButton from "@/components/AddTransactionButton";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
@@ -26,6 +27,9 @@ export default async function TransactionsPage() {
   const businessName = business?.name;
   const avatarUrl = business?.avatar_url;
 
+  const transactionsResult = await getTransactions();
+  const transactions = transactionsResult.data || [];
+
   return (
     <AuthenticatedLayout businessName={businessName} avatarUrl={avatarUrl}>
       <AppHeader
@@ -43,7 +47,7 @@ export default async function TransactionsPage() {
         </div>
       </AppHeader>
       <div className="p-6">
-        <TransactionList />
+        <TransactionList initialTransactions={transactions} />
       </div>
     </AuthenticatedLayout>
   );
