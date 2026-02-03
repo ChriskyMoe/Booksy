@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, extractedData, fileName } = body;
+    const { type, extractedData, fileName, receiptOrigin } = body;
 
     if (!type || !extractedData) {
       return NextResponse.json(
@@ -70,8 +70,14 @@ export async function POST(request: NextRequest) {
 
     const getCategoryType = (
       categoryName: string,
-      amount: number | null | undefined
+      amount: number | null | undefined,
+      forceType?: "income" | "expense"
     ): "income" | "expense" => {
+      // If receipt origin is explicitly set, use it
+      if (forceType) {
+        return forceType;
+      }
+
       const raw = categoryName.toLowerCase();
       const incomeKeywords = [
         "income",
@@ -148,7 +154,8 @@ export async function POST(request: NextRequest) {
       const categoryName = normalizeCategoryName(extractedData.category);
       const categoryType = getCategoryType(
         categoryName,
-        extractedData.total_amount
+        extractedData.total_amount,
+        receiptOrigin
       );
 
       // Get or create category

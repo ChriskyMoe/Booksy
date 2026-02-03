@@ -32,8 +32,6 @@ export default function SetupPage() {
     name: "",
     businessType: "",
     baseCurrency: "USD",
-    fiscalYearStartMonth: 1,
-    fiscalYearStartDay: 1,
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,8 +61,6 @@ export default function SetupPage() {
         name: formData.name,
         business_type: formData.businessType || null,
         base_currency: formData.baseCurrency,
-        fiscal_year_start_month: formData.fiscalYearStartMonth,
-        fiscal_year_start_day: formData.fiscalYearStartDay,
       })
       .select()
       .single();
@@ -180,76 +176,6 @@ export default function SetupPage() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Fiscal Year Start Date
-              </label>
-              <p className="mt-1 text-xs text-gray-500 mb-3">
-                When does your business fiscal year begin? Most businesses use
-                January 1st, but some use April 1st, July 1st, or October 1st.
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="fiscalYearStartMonth"
-                    className="block text-xs font-medium text-gray-600 mb-1"
-                  >
-                    Month
-                  </label>
-                  <select
-                    id="fiscalYearStartMonth"
-                    name="fiscalYearStartMonth"
-                    required
-                    value={formData.fiscalYearStartMonth}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        fiscalYearStartMonth: parseInt(e.target.value),
-                      })
-                    }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                  >
-                    <option value={1}>January</option>
-                    <option value={2}>February</option>
-                    <option value={3}>March</option>
-                    <option value={4}>April</option>
-                    <option value={5}>May</option>
-                    <option value={6}>June</option>
-                    <option value={7}>July</option>
-                    <option value={8}>August</option>
-                    <option value={9}>September</option>
-                    <option value={10}>October</option>
-                    <option value={11}>November</option>
-                    <option value={12}>December</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="fiscalYearStartDay"
-                    className="block text-xs font-medium text-gray-600 mb-1"
-                  >
-                    Day
-                  </label>
-                  <input
-                    id="fiscalYearStartDay"
-                    name="fiscalYearStartDay"
-                    type="number"
-                    min="1"
-                    max="31"
-                    required
-                    value={formData.fiscalYearStartDay}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        fiscalYearStartDay: parseInt(e.target.value),
-                      })
-                    }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                  />
-                </div>
-              </div>
             </div>
           </div>
 

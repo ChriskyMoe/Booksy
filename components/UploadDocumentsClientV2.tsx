@@ -42,6 +42,9 @@ export default function UploadDocumentsClient({
   const [selectedType, setSelectedType] = useState<"receipt" | "invoice">(
     "receipt"
   );
+  const [receiptOrigin, setReceiptOrigin] = useState<"expense" | "income">(
+    "expense"
+  );
   const [uploads, setUploads] = useState<UploadResult[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [viewingData, setViewingData] = useState<UploadResult | null>(null);
@@ -75,6 +78,9 @@ export default function UploadDocumentsClient({
         formData.append("file", file);
         formData.append("type", selectedType);
         formData.append("userId", userId);
+        if (selectedType === "receipt") {
+          formData.append("receiptOrigin", receiptOrigin);
+        }
 
         // Update status to processing
         setUploads((prev) =>
@@ -151,6 +157,7 @@ export default function UploadDocumentsClient({
           type,
           extractedData,
           fileName,
+          receiptOrigin: type === "receipt" ? receiptOrigin : undefined,
         }),
       });
 
@@ -261,6 +268,45 @@ export default function UploadDocumentsClient({
           <div className="text-sm text-muted-foreground">Customer invoices</div>
         </button>
       </div>
+
+      {/* Receipt Origin Selection (only for receipts) */}
+      {selectedType === "receipt" && (
+        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-sm font-semibold mb-3 text-blue-900 dark:text-blue-100">
+            Is this receipt an expense or payment from a client?
+          </p>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="receiptOrigin"
+                value="expense"
+                checked={receiptOrigin === "expense"}
+                onChange={() => setReceiptOrigin("expense")}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">My Expense</span>
+              <span className="text-xs text-muted-foreground">
+                (Money I paid out)
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="receiptOrigin"
+                value="income"
+                checked={receiptOrigin === "income"}
+                onChange={() => setReceiptOrigin("income")}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Client Payment</span>
+              <span className="text-xs text-muted-foreground">
+                (Payment from client)
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Upload Area */}
       <div
