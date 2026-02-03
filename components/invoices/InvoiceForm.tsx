@@ -1,13 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { Invoice, InvoiceItem } from "@/types/invoice";
+import { useState, useEffect } from "react";
+import {
+  Invoice,
+  InvoiceLineItem,
+  InvoiceItemWithDetails,
+} from "@/types/invoice";
 import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
+import {
+  getInvoiceItems,
+  InvoiceItemCatalog,
+} from "@/lib/actions/invoiceItems";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Check, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X, Check, Loader2, Package } from "lucide-react";
 
 interface InvoiceFormProps {
   invoice?: Invoice;
@@ -16,7 +31,12 @@ interface InvoiceFormProps {
 
 export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<InvoiceItem[]>(invoice?.items || []);
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItemCatalog[]>([]);
+
+  // Initialize items with catalog details for display (use invoice.items if available)
+  const [items, setItems] = useState<InvoiceItemWithDetails[]>(
+    invoice?.items || []
+  );
   const [formData, setFormData] = useState({
     invoice_number: invoice?.invoice_number || "",
     title: invoice?.title || "Invoice",
@@ -31,6 +51,17 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
     terms: invoice?.terms || "",
   });
 
+  useEffect(() => {
+    loadInvoiceItems();
+  }, []);
+
+  const loadInvoiceItems = async () => {
+    const result = await getInvoiceItems();
+    if (result.data) {
+      setInvoiceItems(result.data);
+    }
+  };
+
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
   const taxAmount = (subtotal * formData.tax_rate) / 100;
   const total = subtotal + taxAmount;
@@ -38,8 +69,31 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
   const handleAddItem = () => {
     setItems([
       ...items,
-      { description: "", quantity: 1, unit_price: 0, amount: 0 },
+      {
+        catalogItemId: "",
+        quantity: 1,
+        name: "",
+        unit_price: 0,
+        amount: 0,
+      },
     ]);
+  };
+
+  const handleSelectInvoiceItem = (index: number, itemId: string) => {
+    const invoiceItem = invoiceItems.find((i) => i.id === itemId);
+    if (invoiceItem) {
+      const newItems = [...items];
+      newItems[index] = {
+        catalogItemId: invoiceItem.id,
+        quantity: newItems[index].quantity,
+        name: invoiceItem.name,
+        description: invoiceItem.description,
+        unit_price: invoiceItem.unit_price,
+        unit: invoiceItem.unit,
+        amount: newItems[index].quantity * invoiceItem.unit_price,
+      };
+      setItems(newItems);
+    }
   };
 
   const handleItemChange = (index: number, field: string, value: any) => {
@@ -63,17 +117,24 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
     setLoading(true);
 
     try {
+      // Convert display items to line items for database
+      const invoice_line_items: InvoiceLineItem[] = items.map((item) => ({
+        catalogItemId: item.catalogItemId,
+        quantity: item.quantity,
+      }));
+
       const data = {
         ...formData,
         subtotal,
         tax_amount: taxAmount,
         total_amount: total,
-        items,
+        invoice_line_items,
         description: "",
       };
 
       if (invoice) {
         await updateInvoice(invoice.id, data as any);
+        onSubmit?.(invoice); // Call onSubmit callback after update
       } else {
         const created = await createInvoice(data as any);
         onSubmit?.(created);
@@ -179,9 +240,7 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
         {/* Column Headers */}
         {items.length > 0 && (
           <div className="grid grid-cols-4 gap-2 px-2 mb-2">
-            <div className="text-sm font-semibold text-gray-700">
-              Description
-            </div>
+            <div className="text-sm font-semibold text-gray-700">Item</div>
             <div className="text-sm font-semibold text-gray-700">Quantity</div>
             <div className="text-sm font-semibold text-gray-700">
               Unit Price
@@ -194,13 +253,37 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-4 gap-2 items-end">
               <div>
-                <Input
-                  placeholder="e.g., Web Design Services"
-                  value={item.description}
-                  onChange={(e) =>
-                    handleItemChange(index, "description", e.target.value)
+                <Select
+                  value={item.catalogItemId || ""}
+                  onValueChange={(value) =>
+                    handleSelectInvoiceItem(index, value)
                   }
-                />
+                >
+                  <SelectTrigger>
+                    {item.catalogItemId ? (
+                      <span>{item.name}</span>
+                    ) : (
+                      <SelectValue placeholder="Select item..." />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invoiceItems.map((invoiceItem) => (
+                      <SelectItem key={invoiceItem.id} value={invoiceItem.id}>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">
+                              {invoiceItem.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              ${invoiceItem.unit_price} / {invoiceItem.unit}
+                            </div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Input
@@ -222,13 +305,8 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
                   placeholder="0.00"
                   step="0.01"
                   value={item.unit_price}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      "unit_price",
-                      parseFloat(e.target.value)
-                    )
-                  }
+                  disabled
+                  className="bg-gray-100"
                 />
               </div>
               <div className="flex gap-2">

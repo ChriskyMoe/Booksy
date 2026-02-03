@@ -1,8 +1,13 @@
-export interface InvoiceItem {
-  id?: string;
-  description: string;
+export interface InvoiceLineItem {
+  catalogItemId: string;
   quantity: number;
+}
+
+export interface InvoiceItemWithDetails extends InvoiceLineItem {
+  name: string;
+  description?: string;
   unit_price: number;
+  unit: string;
   amount: number;
 }
 
@@ -44,7 +49,8 @@ export interface Invoice {
   notes?: string;
   terms?: string;
 
-  items: InvoiceItem[];
+  invoice_line_items: InvoiceLineItem[];
+  items?: InvoiceItemWithDetails[]; // Enriched items with full catalog details
   payments: InvoicePayment[];
 
   created_at: string;
@@ -69,5 +75,5 @@ export interface CreateInvoicePayload {
   currency: string;
   notes?: string;
   terms?: string;
-  items: InvoiceItem[];
+  invoice_line_items: InvoiceLineItem[];
 }

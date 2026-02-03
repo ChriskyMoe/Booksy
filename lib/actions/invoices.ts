@@ -32,6 +32,7 @@ export async function createInvoice(data: CreateInvoicePayload) {
       currency: data.currency,
       notes: data.notes,
       terms: data.terms,
+      invoice_line_items: data.invoice_line_items,
       status: "draft",
       payment_status: "unpaid",
     })
@@ -39,21 +40,6 @@ export async function createInvoice(data: CreateInvoicePayload) {
     .single();
 
   if (error) throw error;
-
-  // Insert items
-  if (data.items.length > 0) {
-    const { error: itemsError } = await supabase.from("invoice_items").insert(
-      data.items.map((item) => ({
-        invoice_id: invoice.id,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        amount: item.amount,
-      }))
-    );
-
-    if (itemsError) throw itemsError;
-  }
 
   return invoice;
 }
@@ -67,13 +53,12 @@ export async function getInvoice(id: string) {
 
   if (!user) throw new Error("Not authenticated");
 
-  const { data: invoice, error } = await supabase
+  const { data, error } = await supabase
     .from("invoices")
     .select(
       `
       *,
-      items:invoice_items(*),
-      payments:invoice_payments(*)
+      invoice_payments(*)
     `
     )
     .eq("id", id)
@@ -81,7 +66,47 @@ export async function getInvoice(id: string) {
     .single();
 
   if (error) throw error;
-  return invoice as Invoice;
+  if (!data) throw new Error("Invoice not found");
+
+  // Fetch catalog item details for invoice line items
+  const invoice = data as any;
+  const lineItems = invoice.invoice_line_items || [];
+
+  let enrichedItems = [];
+  if (lineItems.length > 0) {
+    const catalogIds = lineItems.map((item: any) => item.catalogItemId);
+
+    const { data: catalogItems } = await supabase
+      .from("invoice_catalog_items")
+      .select("*")
+      .in("id", catalogIds);
+
+    // Enrich line items with catalog details
+    enrichedItems = lineItems.map((lineItem: any) => {
+      const catalogItem = catalogItems?.find(
+        (c) => c.id === lineItem.catalogItemId
+      );
+      if (catalogItem) {
+        return {
+          catalogItemId: lineItem.catalogItemId,
+          quantity: lineItem.quantity,
+          name: catalogItem.name,
+          description: catalogItem.description,
+          unit_price: catalogItem.unit_price,
+          unit: catalogItem.unit,
+          amount: lineItem.quantity * catalogItem.unit_price,
+        };
+      }
+      return lineItem;
+    });
+  }
+
+  return {
+    ...invoice,
+    invoice_line_items: lineItems,
+    items: enrichedItems,
+    payments: invoice.invoice_payments || [],
+  } as Invoice;
 }
 
 // Get all invoices
@@ -149,9 +174,42 @@ export async function updateInvoice(
 
   if (!user) throw new Error("Not authenticated");
 
+  // Prepare the update object - exclude invoice_line_items for now
+  const updateObj: any = {};
+
+  const fieldsToUpdate = [
+    "invoice_number",
+    "title",
+    "description",
+    "issue_date",
+    "due_date",
+    "client_name",
+    "client_email",
+    "client_address",
+    "client_phone",
+    "subtotal",
+    "tax_rate",
+    "tax_amount",
+    "total_amount",
+    "currency",
+    "notes",
+    "terms",
+  ];
+
+  fieldsToUpdate.forEach((field) => {
+    if (field in updates) {
+      updateObj[field] = (updates as any)[field];
+    }
+  });
+
+  // Handle invoice_line_items update
+  if (updates.invoice_line_items) {
+    updateObj.invoice_line_items = updates.invoice_line_items;
+  }
+
   const { data, error } = await supabase
     .from("invoices")
-    .update(updates)
+    .update(updateObj)
     .eq("id", id)
     .eq("user_id", user.id)
     .select()
@@ -272,4 +330,83 @@ export async function generateInvoiceNumber() {
   const lastNumber = data[0].invoice_number;
   const number = parseInt(lastNumber.split("-")[1]) + 1;
   return `INV-${String(number).padStart(3, "0")}`;
+}
+// Mark invoice as paid and create income transaction
+export async function markInvoiceAsPaid(
+  invoiceId: string,
+  paymentMethod: "cash" | "card" | "transfer" | "other"
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  // Get invoice
+  const invoice = await getInvoice(invoiceId);
+  if (!invoice) throw new Error("Invoice not found");
+
+  // Get or create "Sales" income category
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!business) throw new Error("Business not found");
+
+  let { data: category } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("business_id", business.id)
+    .eq("type", "income")
+    .eq("name", "Sales")
+    .single();
+
+  // Create Sales category if it doesn't exist
+  if (!category) {
+    const { data: newCategory, error: categoryError } = await supabase
+      .from("categories")
+      .insert({
+        business_id: business.id,
+        name: "Sales",
+        type: "income",
+        is_default: false,
+      })
+      .select()
+      .single();
+
+    if (categoryError) throw categoryError;
+    category = newCategory;
+  }
+
+  // Create income transaction
+  const { error: transactionError } = await supabase
+    .from("transactions")
+    .insert({
+      business_id: business.id,
+      category_id: category.id,
+      amount: invoice.total_amount,
+      currency: invoice.currency,
+      base_amount: invoice.total_amount, // Assuming same currency for now
+      transaction_date: new Date().toISOString().split("T")[0],
+      payment_method: paymentMethod,
+      client_vendor: invoice.client_name,
+      notes: `Invoice #${invoice.invoice_number} - ${invoice.title}`,
+    });
+
+  if (transactionError) throw transactionError;
+
+  // Update invoice status to paid
+  const { data, error } = await supabase
+    .from("invoices")
+    .update({ status: "paid", payment_status: "paid" })
+    .eq("id", invoiceId)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }

@@ -98,16 +98,33 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </tr>
           </thead>
           <tbody>
-            {invoice.items.map((item) => (
-              <tr key={item.id} className="border-b">
-                <td className="py-3">{item.description}</td>
-                <td className="text-right py-3">{item.quantity}</td>
-                <td className="text-right py-3">
-                  ${item.unit_price.toFixed(2)}
+            {!invoice.items || invoice.items.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="py-4 text-center text-gray-500">
+                  No items
                 </td>
-                <td className="text-right py-3">${item.amount.toFixed(2)}</td>
               </tr>
-            ))}
+            ) : (
+              invoice.items.map((item, index) => (
+                <tr key={index} className="border-b">
+                  <td className="py-3">
+                    <div className="font-medium">{item.name}</div>
+                    {item.description && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {item.description}
+                      </div>
+                    )}
+                  </td>
+                  <td className="text-right py-3">
+                    {item.quantity} {item.unit}
+                  </td>
+                  <td className="text-right py-3">
+                    ${item.unit_price.toFixed(2)}
+                  </td>
+                  <td className="text-right py-3">${item.amount.toFixed(2)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
