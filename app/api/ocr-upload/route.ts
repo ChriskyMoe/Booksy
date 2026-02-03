@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
-import { is } from "date-fns/locale";
-import all from "gsap/all";
-import image from "next/image";
-import { type } from "os";
-import { use } from "react";
-import { buffer } from "stream/consumers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -27,6 +21,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const type = formData.get("type") as "receipt" | "invoice";
+    const receiptOrigin = formData.get("receiptOrigin") as
+      | "expense"
+      | "income"
+      | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -63,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
   ],
   "tax_amount": "tax amount if available",
-  "payment_method": "payment method if visible"`
+  "payment_method": "payment method if visible"
 }
 
 Extract all visible information. If a field is not visible, use null.`
@@ -157,6 +155,7 @@ Extract all visible information. If a field is not visible, use null.`;
       success: true,
       type,
       data: extractedData,
+      receiptOrigin: type === "receipt" ? receiptOrigin : undefined,
       file: {
         name: file.name,
         url: publicUrlData?.publicUrl || null,
