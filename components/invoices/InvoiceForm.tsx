@@ -294,9 +294,11 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
                     handleItemChange(
                       index,
                       "quantity",
-                      parseFloat(e.target.value)
+                      Math.max(0, parseFloat(e.target.value) || 0)
                     )
                   }
+                  min="0"
+                  step="1"
                 />
               </div>
               <div>
