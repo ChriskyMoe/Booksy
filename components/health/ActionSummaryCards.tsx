@@ -28,6 +28,7 @@ export function ActionSummaryCards({
   receivables,
   currency,
 }: ActionSummaryCardsProps) {
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
   const [showAllReceivables, setShowAllReceivables] = useState(false);
   const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
   const totalReceivables = receivables.reduce(
@@ -42,7 +43,10 @@ export function ActionSummaryCards({
         <div className="bg-card rounded-xl shadow-card border border-border p-6 hover:shadow-elevated transition-premium">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-foreground">To Pay</h3>
-            <button className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 transition-premium">
+            <button
+              onClick={() => setShowAllExpenses(true)}
+              className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 transition-premium"
+            >
               View all
               <ArrowUpRight className="w-4 h-4" />
             </button>
@@ -53,7 +57,6 @@ export function ActionSummaryCards({
               {currency}
               {totalExpenses.toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Due this month</p>
           </div>
 
           <div className="space-y-3">
@@ -100,9 +103,6 @@ export function ActionSummaryCards({
               {currency}
               {totalReceivables.toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Expected this month
-            </p>
           </div>
 
           <div className="space-y-3">
@@ -148,6 +148,60 @@ export function ActionSummaryCards({
           </div>
         </div>
       </div>
+
+      {/* Modal for all receivables */}
+      {showAllExpenses && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl border border-border max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground">
+                All Payables
+              </h2>
+              <button
+                onClick={() => setShowAllExpenses(false)}
+                className="text-muted-foreground hover:text-foreground transition-premium"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {currency}
+                  {totalExpenses.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {expenses.map((expense, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 rounded-lg border transition-premium bg-muted border-border hover:bg-accent"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">
+                        {expense.name}
+                      </p>
+                      <div className="flex items-center gap-1 mt-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {expense.dueDate}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-foreground text-right">
+                      {currency}
+                      {expense.amount.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for all receivables */}
       {showAllReceivables && (

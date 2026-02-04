@@ -86,6 +86,106 @@ async function triggerWebhookNotification(data: {
   }
 }
 
+export async function triggerLowBalanceIfNeeded(params: {
+  businessId: string;
+  userEmail: string;
+  userName?: string;
+  expenseDelta?: number;
+}) {
+  const { businessId, userEmail, userName, expenseDelta } = params;
+  const supabase = await createClient();
+
+  if (!userEmail) return;
+
+  const { data: business, error: businessError } = await supabase
+    .from("businesses")
+    .select("id, base_currency")
+    .eq("id", businessId)
+    .single();
+
+  if (businessError || !business) return;
+
+  // Current cash from transactions
+  const { data: allTransactions, error: txError } = await supabase
+    .from("transactions")
+    .select("base_amount, category:categories(type)")
+    .eq("business_id", businessId);
+
+  if (txError) return;
+
+  let totalIncome = 0;
+  let totalExpenses = 0;
+  (allTransactions || []).forEach((tx: any) => {
+    if (tx.category?.type === "income") {
+      totalIncome += Number(tx.base_amount);
+    } else if (tx.category?.type === "expense") {
+      totalExpenses += Number(tx.base_amount);
+    }
+  });
+
+  const currentCash = totalIncome - totalExpenses;
+
+  // Receivables (income invoices, unpaid)
+  const { data: incomeInvoices } = await supabase
+    .from("invoices")
+    .select("total_amount, status")
+    .eq("business_id", businessId)
+    .eq("type", "income");
+
+  const totalReceivables = (incomeInvoices || [])
+    .filter((i: any) => i.status !== "paid" && i.status !== "draft")
+    .reduce((sum: number, i: any) => sum + Number(i.total_amount), 0);
+
+  // Payables (expense invoices, unpaid)
+  const { data: expenseInvoices } = await supabase
+    .from("invoices")
+    .select("total_amount, status")
+    .eq("business_id", businessId)
+    .eq("type", "expense");
+
+  const totalToPay = (expenseInvoices || [])
+    .filter((i: any) => i.status !== "paid" && i.status !== "draft")
+    .reduce((sum: number, i: any) => sum + Number(i.total_amount), 0);
+
+  const netBalance = currentCash + totalReceivables - totalToPay;
+  const isAtRisk = currentCash < 0 || netBalance < 0;
+
+  // Only trigger if it crossed below 0 due to this expense
+  if (isAtRisk) {
+    if (typeof expenseDelta === "number" && expenseDelta > 0) {
+      const previousNet = netBalance + expenseDelta;
+      const previousCurrentCash = currentCash + expenseDelta;
+      if (previousNet < 0 || previousCurrentCash < 0) return;
+    }
+
+    const alreadySent = await wasNotificationSentToday(
+      supabase,
+      businessId,
+      "LOW_BALANCE"
+    );
+
+    if (!alreadySent) {
+      await delay(500);
+      triggerWebhookNotification({
+        userEmail,
+        userName,
+        notificationType: "LOW_BALANCE",
+        details: {
+          currency: business.base_currency,
+          currentCash,
+          netBalance,
+          totalReceivables,
+          totalToPay,
+          deficit:
+            netBalance < 0 ? Math.abs(netBalance) : Math.abs(currentCash),
+        },
+      }).catch((err) => console.error("Webhook notification error:", err));
+
+      await logNotification(supabase, businessId, "LOW_BALANCE");
+    }
+  }
+}
+
 export async function getHealthDashboardData() {
   const supabase = await createClient();
   const {
@@ -137,7 +237,7 @@ export async function getHealthDashboardData() {
   // Fetch all transactions with their category types
   const { data: allTransactions, error: txError } = await supabase
     .from("transactions")
-    .select("base_amount, category:categories(type)")
+    .select("base_amount, transaction_date, category:categories(type)")
     .eq("business_id", business.id);
 
   if (txError) {
@@ -160,12 +260,27 @@ export async function getHealthDashboardData() {
 
   const currentCash = totalIncome - totalExpenses;
 
-  // Fetch payables from expense invoices (exclude paid)
   const today = new Date();
-  const thirtyDaysLater = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const todayStr = today.toISOString().split("T")[0];
-  const thirtyDaysStr = thirtyDaysLater.toISOString().split("T")[0];
+  const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  let totalMonthlyExpenses = 0;
 
+  transactions.forEach((tx) => {
+    if (tx.category?.type !== "expense") return;
+    if (!tx.transaction_date) return;
+    const txDate = new Date(tx.transaction_date);
+    if (Number.isNaN(txDate.getTime())) return;
+    if (txDate >= last30Days && txDate <= today) {
+      totalMonthlyExpenses += Number(tx.base_amount);
+    }
+  });
+
+  const safeCash = Math.max(
+    totalMonthlyExpenses * 0.25,
+    totalMonthlyExpenses * (14 / 30)
+  );
+
+  // Fetch payables from expense invoices (exclude paid)
+  const thirtyDaysLater = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   const { data: expenseInvoicesData } = await supabase
     .from("invoices")
     .select("*")
@@ -174,7 +289,7 @@ export async function getHealthDashboardData() {
     .order("due_date", { ascending: true });
 
   const unpaidExpenseInvoices = (expenseInvoicesData || []).filter(
-    (invoice: any) => invoice.status !== "paid"
+    (invoice: any) => invoice.status !== "paid" && invoice.status !== "draft"
   );
 
   const expenses = unpaidExpenseInvoices
@@ -205,7 +320,7 @@ export async function getHealthDashboardData() {
     .order("due_date", { ascending: true });
 
   const unpaidInvoices = (invoicesData || []).filter(
-    (invoice: any) => invoice.status !== "paid"
+    (invoice: any) => invoice.status !== "paid" && invoice.status !== "draft"
   );
 
   let receivables = unpaidInvoices.map((invoice: any) => {
@@ -303,7 +418,7 @@ export async function getHealthDashboardData() {
     }
   }
 
-  // Calculate totals for remaining balance calculation
+  // Calculate totals for net balance calculation
   const totalReceivables = receivables.reduce(
     (sum, item) => sum + item.amount,
     0
@@ -313,20 +428,46 @@ export async function getHealthDashboardData() {
     0
   );
 
-  // Remaining balance: current cash + to receive - to pay
-  const remainingBalance = currentCash + totalReceivables - totalToPay;
-
-  // Safe cash: current cash + 25%
-  const safeCash = currentCash + currentCash * 0.25;
+  // Net balance: current cash + receivables - payables
+  const netBalance = currentCash + totalReceivables - totalToPay;
+  const remainingBalance = netBalance;
 
   // Determine health status and explanation
   let status: "safe" | "warning" | "at-risk" = "safe";
   let explanation = "";
-  const warningThreshold = safeCash;
-
-  if (remainingBalance < 0) {
+  if (currentCash < 0) {
     status = "at-risk";
-    explanation = `Your projected remaining balance is negative (${business.base_currency}${remainingBalance.toLocaleString()}). You need ${business.base_currency}${Math.abs(remainingBalance).toLocaleString()} more to cover upcoming expenses. Urgent action required!`;
+    explanation = `Your current cash balance is negative (${business.base_currency}${currentCash.toLocaleString()}). Immediate action is required to restore positive cash flow.`;
+
+    // Trigger webhook immediately for low balance
+    const alreadySent = await wasNotificationSentToday(
+      supabase,
+      business.id,
+      "LOW_BALANCE"
+    );
+
+    if (!alreadySent) {
+      await delay(500);
+      triggerWebhookNotification({
+        userEmail,
+        userName,
+        notificationType: "LOW_BALANCE",
+        details: {
+          currency: business.base_currency,
+          currentCash,
+          remainingBalance,
+          safeCash,
+          totalReceivables,
+          totalToPay,
+          deficit: Math.abs(currentCash),
+        },
+      }).catch((err) => console.error("Webhook notification error:", err));
+
+      await logNotification(supabase, business.id, "LOW_BALANCE");
+    }
+  } else if (remainingBalance < 0) {
+    status = "at-risk";
+    explanation = `Your projected net balance is negative (${business.base_currency}${remainingBalance.toLocaleString()}). You need ${business.base_currency}${Math.abs(remainingBalance).toLocaleString()} more to cover upcoming expenses. Urgent action required!`;
 
     // Trigger webhook immediately for low balance
     const alreadySent = await wasNotificationSentToday(
@@ -354,12 +495,12 @@ export async function getHealthDashboardData() {
 
       await logNotification(supabase, business.id, "LOW_BALANCE");
     }
-  } else if (remainingBalance < warningThreshold) {
+  } else if (currentCash < safeCash) {
     status = "warning";
-    explanation = `After paying bills and receiving payments, you'll have ${business.base_currency}${remainingBalance.toLocaleString()}. This is below the safe cash threshold of ${business.base_currency}${warningThreshold.toLocaleString()}. Consider delaying non-essential expenses or accelerating receivables collection.`;
+    explanation = `Your current cash (${business.base_currency}${currentCash.toLocaleString()}) is below the safe cash buffer of ${business.base_currency}${safeCash.toLocaleString()}. Consider delaying non-essential expenses or accelerating receivables collection.`;
   } else {
     status = "safe";
-    explanation = `Your projected remaining balance is healthy at ${business.base_currency}${remainingBalance.toLocaleString()} after all pending transactions. You have sufficient buffer for unexpected costs.`;
+    explanation = `Your projected net balance is healthy at ${business.base_currency}${remainingBalance.toLocaleString()} after all pending transactions. You have sufficient buffer for unexpected costs.`;
   }
 
   // If no invoices found, fall back to income transactions from next 30 days
@@ -395,12 +536,26 @@ export async function getHealthDashboardData() {
   const alerts = [];
 
   // Alert for upcoming expenses
-  if (expenses.length > 0) {
-    const nextExpense = expenses[0];
+  const sevenDaysLater = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const upcomingPayables = unpaidExpenseInvoices
+    .filter((invoice: any) => new Date(invoice.due_date) <= sevenDaysLater)
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+    );
+
+  if (upcomingPayables.length > 0) {
+    const nextExpense = upcomingPayables[0];
     alerts.push({
       id: "1",
       type: "urgent" as const,
-      message: `${nextExpense.name} due on ${nextExpense.dueDate}`,
+      message: `${nextExpense.client_name || "Payable"} due on ${new Date(
+        nextExpense.due_date
+      ).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`,
       icon: "clock" as const,
     });
   }
@@ -476,7 +631,9 @@ export async function triggerHealthAlertWebhooks() {
 
       const today = new Date();
       const todayStr = today.toISOString().split("T")[0];
-      const thirtyDaysStr = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const thirtyDaysAgoStr = new Date(
+        today.getTime() - 30 * 24 * 60 * 60 * 1000
+      )
         .toISOString()
         .split("T")[0];
 
@@ -500,33 +657,33 @@ export async function triggerHealthAlertWebhooks() {
 
       const currentCash = totalIncome - totalExpenses;
 
-      // Fetch upcoming expenses
-      const { data: upcomingExpensesData } = await supabase
-        .from("transactions")
-        .select("*, category:categories(type, name)")
-        .eq("business_id", business.id)
-        .eq("category.type", "expense")
-        .gte("transaction_date", todayStr)
-        .lte("transaction_date", thirtyDaysStr)
-        .order("transaction_date", { ascending: true })
-        .limit(3);
-
-      const expenses = (upcomingExpensesData || []).map((exp: any) => ({
-        amount: Number(exp.base_amount),
-      }));
-
-      // Fetch invoices
-      const { data: invoicesData } = await supabase
+      // Fetch invoices (unpaid only)
+      const { data: incomeInvoicesData } = await supabase
         .from("invoices")
         .select("*")
         .eq("business_id", business.id)
+        .eq("type", "income")
         .order("due_date", { ascending: true });
 
-      let receivables = (invoicesData || []).map((invoice: any) => ({
+      const { data: expenseInvoicesData } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("business_id", business.id)
+        .eq("type", "expense")
+        .order("due_date", { ascending: true });
+
+      const unpaidIncomeInvoices = (incomeInvoicesData || []).filter(
+        (invoice: any) =>
+          invoice.status !== "paid" && invoice.status !== "draft"
+      );
+      const unpaidExpenseInvoices = (expenseInvoicesData || []).filter(
+        (invoice: any) =>
+          invoice.status !== "paid" && invoice.status !== "draft"
+      );
+
+      const receivables = unpaidIncomeInvoices.map((invoice: any) => ({
         amount: Number(invoice.total_amount),
-        isOverdue:
-          invoice.status === "overdue" ||
-          (new Date(invoice.due_date) < today && invoice.status !== "paid"),
+        isOverdue: new Date(invoice.due_date) < today,
       }));
 
       // Calculate balances
@@ -534,12 +691,32 @@ export async function triggerHealthAlertWebhooks() {
         (sum, item) => sum + item.amount,
         0
       );
-      const totalToPay = expenses.reduce((sum, item) => sum + item.amount, 0);
+      const totalToPay = unpaidExpenseInvoices.reduce(
+        (sum: number, invoice: any) => sum + Number(invoice.total_amount),
+        0
+      );
       const remainingBalance = currentCash + totalReceivables - totalToPay;
-      const safeCash = currentCash + currentCash * 0.25;
+
+      const { data: monthlyExpenseTx } = await supabase
+        .from("transactions")
+        .select("base_amount, category:categories(type)")
+        .eq("business_id", business.id)
+        .eq("category.type", "expense")
+        .gte("transaction_date", thirtyDaysAgoStr)
+        .lte("transaction_date", todayStr);
+
+      const totalMonthlyExpenses = (monthlyExpenseTx || []).reduce(
+        (sum: number, tx: any) => sum + Number(tx.base_amount),
+        0
+      );
+
+      const safeCash = Math.max(
+        totalMonthlyExpenses * 0.25,
+        totalMonthlyExpenses * (14 / 30)
+      );
 
       // Check for low balance
-      if (remainingBalance < 0) {
+      if (currentCash < 0 || remainingBalance < 0) {
         await triggerWebhookNotification({
           userEmail,
           userName,
@@ -551,19 +728,22 @@ export async function triggerHealthAlertWebhooks() {
             safeCash,
             totalReceivables,
             totalToPay,
-            deficit: Math.abs(remainingBalance),
+            deficit:
+              remainingBalance < 0
+                ? Math.abs(remainingBalance)
+                : Math.abs(currentCash),
           },
         });
         triggered++;
       }
 
       // Check for invoices due soon (within 3 days)
-      const invoicesDueSoon = (invoicesData || []).filter((invoice: any) => {
+      const invoicesDueSoon = unpaidIncomeInvoices.filter((invoice: any) => {
         const dueDate = new Date(invoice.due_date);
         const daysDiff = Math.ceil(
           (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
         );
-        return invoice.status !== "paid" && daysDiff >= 0 && daysDiff <= 3;
+        return daysDiff >= 0 && daysDiff <= 3;
       });
 
       if (invoicesDueSoon.length > 0) {
@@ -589,10 +769,9 @@ export async function triggerHealthAlertWebhooks() {
       }
 
       // Check for overdue invoices
-      const overdueInvoices = (invoicesData || []).filter((invoice: any) => {
-        const dueDate = new Date(invoice.due_date);
-        return invoice.status !== "paid" && dueDate < today;
-      });
+      const overdueInvoices = unpaidIncomeInvoices.filter(
+        (invoice: any) => new Date(invoice.due_date) < today
+      );
 
       if (overdueInvoices.length > 0) {
         await triggerWebhookNotification({

@@ -129,7 +129,7 @@ export async function GET(req: Request) {
         remindersSent += 1;
       }
 
-      // Negative remaining balance alert
+      // Negative net balance alert
       const { data: allTransactions, error: txError } = await supabase
         .from("transactions")
         .select("base_amount, transaction_date, category:categories(type)")
@@ -201,7 +201,7 @@ export async function GET(req: Request) {
           subject: "Alert: Projected Balance Below 0",
           html: `
             <div>
-              <p>Your projected remaining balance is negative.</p>
+              <p>Your projected net balance is negative.</p>
               <p><strong>Projected Balance:</strong> ${formatCurrency(
                 remainingBalance,
                 business.base_currency
@@ -209,7 +209,7 @@ export async function GET(req: Request) {
               <p>Consider accelerating receivables or delaying expenses.</p>
             </div>
           `,
-          text: `Your projected remaining balance is negative: ${formatCurrency(
+          text: `Your projected net balance is negative: ${formatCurrency(
             remainingBalance,
             business.base_currency
           )}.`,

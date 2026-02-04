@@ -63,7 +63,7 @@ export function PrimaryHealthCard({
 
         <div className="text-right">
           <h3 className="text-sm font-semibold text-muted-foreground mb-1">
-            Remaining Balance
+            Net Balance
           </h3>
           <div className="flex items-center justify-end gap-2">
             <Circle className={`w-3 h-3 fill-current ${config.textColor}`} />
