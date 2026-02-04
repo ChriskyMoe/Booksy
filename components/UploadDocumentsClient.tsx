@@ -41,6 +41,7 @@ export default function UploadDocumentsClient({
   const [uploads, setUploads] = useState<UploadResult[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [viewingData, setViewingData] = useState<UploadResult | null>(null);
+  const [showRawData, setShowRawData] = useState(false);
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
@@ -158,6 +159,93 @@ export default function UploadDocumentsClient({
     }
   };
 
+  const closeModal = () => {
+    setViewingData(null);
+    setShowRawData(false);
+  };
+
+  const displayValue = (value: any) => {
+    if (value === null || value === undefined || value === "") return "—";
+    return String(value);
+  };
+
+  const formatMoney = (value: any, currency?: string) => {
+    if (value === null || value === undefined || value === "") return "—";
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      try {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: currency || "USD",
+          maximumFractionDigits: 2,
+        }).format(numeric);
+      } catch {
+        return numeric.toFixed(2);
+      }
+    }
+    return String(value);
+  };
+
+  const renderInfoCard = (label: string, value: any, highlight = false) => (
+    <div
+      className={`rounded-lg border p-3 ${
+        highlight
+          ? "border-blue-200 bg-blue-50 dark:border-blue-900/60 dark:bg-blue-950/40"
+          : "bg-card"
+      }`}
+    >
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-medium text-foreground">
+        {displayValue(value)}
+      </div>
+    </div>
+  );
+
+  const renderItemsTable = (
+    items: any[] | undefined,
+    columns: { key: string; label: string; format?: (v: any) => string }[]
+  ) => {
+    if (!items || items.length === 0) {
+      return (
+        <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+          No items extracted
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((row, idx) => (
+              <tr key={idx} className="bg-card">
+                {columns.map((col) => (
+                  <td key={col.key} className="px-3 py-2 text-foreground">
+                    {col.format
+                      ? col.format(row?.[col.key])
+                      : displayValue(row?.[col.key])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Document Type Selection */}
@@ -262,7 +350,10 @@ export default function UploadDocumentsClient({
                   {upload.status === "success" && (
                     <>
                       <button
-                        onClick={() => setViewingData(upload)}
+                        onClick={() => {
+                          setShowRawData(false);
+                          setViewingData(upload);
+                        }}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors"
                       >
                         <Eye className="h-4 w-4" />
@@ -296,40 +387,174 @@ export default function UploadDocumentsClient({
       {viewingData && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewingData(null)}
+          onClick={closeModal}
         >
           <div
             className="bg-white dark:bg-gray-900 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Extracted Data</h3>
+              <div>
+                <h3 className="text-xl font-semibold">Extracted Data</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {viewingData.type === "receipt" ? "Receipt" : "Invoice"} •{" "}
+                  {viewingData.file?.name || viewingData.fileName}
+                </p>
+              </div>
               <button
-                onClick={() => setViewingData(null)}
+                onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <XCircle className="h-6 w-6" />
               </button>
             </div>
+            <div className="space-y-4">
+              {viewingData.type === "receipt" ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {renderInfoCard(
+                      "Merchant",
+                      viewingData.data?.merchant_name,
+                      true
+                    )}
+                    {renderInfoCard("Date", viewingData.data?.date)}
+                    {renderInfoCard(
+                      "Total",
+                      formatMoney(
+                        viewingData.data?.total_amount,
+                        viewingData.data?.currency
+                      )
+                    )}
+                    {renderInfoCard("Category", viewingData.data?.category)}
+                    {renderInfoCard(
+                      "Tax",
+                      formatMoney(
+                        viewingData.data?.tax_amount,
+                        viewingData.data?.currency
+                      )
+                    )}
+                    {renderInfoCard(
+                      "Payment Method",
+                      viewingData.data?.payment_method
+                    )}
+                    {renderInfoCard("Currency", viewingData.data?.currency)}
+                  </div>
 
-            <div className="space-y-2">
-              <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-auto text-sm">
-                {JSON.stringify(viewingData.data, null, 2)}
-              </pre>
-            </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">Items</p>
+                    {renderItemsTable(viewingData.data?.items, [
+                      { key: "description", label: "Description" },
+                      {
+                        key: "amount",
+                        label: "Amount",
+                        format: (v) =>
+                          formatMoney(v, viewingData.data?.currency),
+                      },
+                    ])}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {renderInfoCard(
+                      "Invoice #",
+                      viewingData.data?.invoice_number,
+                      true
+                    )}
+                    {renderInfoCard(
+                      "Invoice Date",
+                      viewingData.data?.invoice_date
+                    )}
+                    {renderInfoCard("Due Date", viewingData.data?.due_date)}
+                    {renderInfoCard(
+                      "Customer",
+                      viewingData.data?.customer_name
+                    )}
+                    {renderInfoCard("Email", viewingData.data?.customer_email)}
+                    {renderInfoCard(
+                      "Address",
+                      viewingData.data?.customer_address
+                    )}
+                    {renderInfoCard(
+                      "Subtotal",
+                      formatMoney(
+                        viewingData.data?.subtotal,
+                        viewingData.data?.currency
+                      )
+                    )}
+                    {renderInfoCard(
+                      "Tax",
+                      formatMoney(
+                        viewingData.data?.tax_amount,
+                        viewingData.data?.currency
+                      )
+                    )}
+                    {renderInfoCard(
+                      "Total",
+                      formatMoney(
+                        viewingData.data?.total_amount,
+                        viewingData.data?.currency
+                      )
+                    )}
+                    {renderInfoCard("Currency", viewingData.data?.currency)}
+                  </div>
 
-            {viewingData.file?.url && (
-              <div className="mt-4">
-                <a
-                  href={viewingData.file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">Items</p>
+                    {renderItemsTable(viewingData.data?.items, [
+                      { key: "description", label: "Description" },
+                      { key: "quantity", label: "Qty" },
+                      {
+                        key: "unit_price",
+                        label: "Unit Price",
+                        format: (v) =>
+                          formatMoney(v, viewingData.data?.currency),
+                      },
+                      {
+                        key: "amount",
+                        label: "Amount",
+                        format: (v) =>
+                          formatMoney(v, viewingData.data?.currency),
+                      },
+                    ])}
+                  </div>
+
+                  {viewingData.data?.notes && (
+                    <div className="rounded-lg border bg-card p-3">
+                      <div className="text-xs text-muted-foreground">Notes</div>
+                      <div className="mt-1 text-sm text-foreground">
+                        {displayValue(viewingData.data?.notes)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                <button
+                  onClick={() => setShowRawData((prev) => !prev)}
+                  className="text-xs text-blue-600 hover:underline"
                 >
-                  View uploaded file →
-                </a>
+                  {showRawData ? "Hide raw JSON" : "View raw JSON"}
+                </button>
+                {viewingData.file?.url && (
+                  <a
+                    href={viewingData.file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-xs"
+                  >
+                    View uploaded file →
+                  </a>
+                )}
               </div>
-            )}
+
+              {showRawData && (
+                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-auto text-xs max-h-64">
+                  {JSON.stringify(viewingData.data, null, 2)}
+                </pre>
+              )}
+            </div>
           </div>
         </div>
       )}
