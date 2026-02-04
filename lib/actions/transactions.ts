@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getExchangeRate } from '@/lib/currency'
+import { createJournalEntryFromTransaction } from '@/lib/actions/journal'
 
 export async function getTransactions(filters?: {
   categoryId?: string
@@ -60,6 +61,22 @@ export async function getTransactions(filters?: {
   return { data }
 }
 
+/**
+ * Total cash balance from the transactions table (income − expenses).
+ * Use this so Ledger and Dashboard show the same total as Transactions.
+ */
+export async function getTotalCashBalance() {
+  const result = await getTransactions()
+  if (result.error) return { error: result.error, data: null }
+  const list = result.data || []
+  let total = 0
+  list.forEach((t: any) => {
+    const amount = Number(t.base_amount) ?? 0
+    total += t.category?.type === 'income' ? amount : -amount
+  })
+  return { data: total, error: null }
+}
+
 export async function createTransaction(transaction: {
   category_id: string
   amount: number
@@ -112,6 +129,24 @@ export async function createTransaction(transaction: {
 
   if (error) {
     return { error: error.message }
+  }
+
+  // Create a ledger row (journal entry) so the Ledger shows this transaction
+  const category = data?.category as { name: string; type: 'income' | 'expense' } | null
+  if (category?.name != null && category?.type != null) {
+    const journalResult = await createJournalEntryFromTransaction({
+      business_id: business.id,
+      transaction_date: transaction.transaction_date,
+      description: transaction.notes || transaction.client_vendor || 'Transaction',
+      category_name: category.name,
+      category_type: category.type,
+      amount: baseAmount,
+    })
+    if (journalResult.error) {
+      console.error('Ledger sync failed:', journalResult.error)
+      // Transaction is already saved; return success so user sees their transaction
+      // Ledger may be missing this row until fixed
+    }
   }
 
   return { data }
