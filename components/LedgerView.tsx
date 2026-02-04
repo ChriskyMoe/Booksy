@@ -78,19 +78,50 @@ export default function LedgerView() {
     }))
   }, [journalEntries])
 
-  const totalCashBalance = useMemo(() => {
-    let balance = 0
+  // Total income (Cash debits) and total expense (Cash credits) from ledger, non-void only
+  const { totalIncome, totalExpense, totalCashBalance } = useMemo(() => {
+    let income = 0
+    let expense = 0
     processedEntries.forEach((entry) => {
       if (entry.status !== 'void') {
         entry.lines.forEach((line) => {
           if (line.type === 'asset' && line.accountName === 'Cash') {
-            balance += line.debit - line.credit
+            income += line.debit
+            expense += line.credit
           }
         })
       }
     })
-    return balance
+    return {
+      totalIncome: income,
+      totalExpense: expense,
+      totalCashBalance: income - expense,
+    }
   }, [processedEntries])
+
+  // Ledger order: oldest first (chronological), so running balance counts from the top
+  const entriesChronological = useMemo(() => {
+    return [...processedEntries].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  }, [processedEntries])
+
+  // Running balance: recalculated from oldest to newest (top to bottom). Each row = balance after that transaction.
+  const runningBalanceByEntryId = useMemo(() => {
+    const map = new Map<string, number>()
+    let running = 0
+    entriesChronological.forEach((entry) => {
+      if (entry.status !== 'void') {
+        entry.lines.forEach((line) => {
+          if (line.type === 'asset' && line.accountName === 'Cash') {
+            running += line.debit - line.credit
+          }
+        })
+      }
+      map.set(entry.id, running)
+    })
+    return map
+  }, [entriesChronological])
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>
@@ -113,29 +144,53 @@ export default function LedgerView() {
         </div>
       </div>
 
-      <Card className="p-4">
-        <CardContent className="flex justify-between items-center p-0">
-          <h2 className="text-lg font-semibold text-foreground">Total cash balance</h2>
-          <p
-            className={`text-2xl font-bold ${
-              totalCashBalance >= 0 ? 'text-success' : 'text-destructive'
-            }`}
-          >
-            {formatCurrency(totalCashBalance, 'USD')}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <p className="text-sm font-medium text-muted-foreground">Total income</p>
+            <p className="text-xl font-bold text-success mt-1">
+              {formatCurrency(totalIncome, 'USD')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <p className="text-sm font-medium text-muted-foreground">Total expense</p>
+            <p className="text-xl font-bold text-destructive mt-1">
+              {formatCurrency(totalExpense, 'USD')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="p-4">
+          <CardContent className="p-0">
+            <p className="text-sm font-medium text-muted-foreground">Total balance</p>
+            <p
+              className={`text-xl font-bold mt-1 ${
+                totalCashBalance >= 0 ? 'text-success' : 'text-destructive'
+              }`}
+            >
+              {formatCurrency(totalCashBalance, 'USD')}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-      <LedgerTableView entries={processedEntries} onVoid={handleVoid} />
+      <LedgerTableView
+        entries={[...entriesChronological].reverse()}
+        runningBalanceByEntryId={runningBalanceByEntryId}
+        onVoid={handleVoid}
+      />
     </div>
   )
 }
 
 function LedgerTableView({
   entries,
+  runningBalanceByEntryId,
   onVoid,
 }: {
   entries: DisplayEntry[]
+  runningBalanceByEntryId: Map<string, number>
   onVoid: (entryId: string) => void
 }) {
   const isCash = (accountName: string) => accountName === 'Cash'
@@ -166,6 +221,9 @@ function LedgerTableView({
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Credit
               </th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Running balance
+              </th>
               <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Actions
               </th>
@@ -174,97 +232,109 @@ function LedgerTableView({
           <tbody className="bg-card divide-y divide-border">
             {entries.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={7} className="px-6 py-12 text-center text-sm text-muted-foreground">
                   No ledger entries yet
                 </td>
               </tr>
             ) : (
-              entries.map((entry) => (
-                <React.Fragment key={entry.id}>
-                  {entry.lines.map((line, lineIdx) => {
-                    const debitGreen = debitIsIncome(line)
-                    const debitRed = debitIsExpense(line)
-                    const creditGreen = creditIsIncome(line)
-                    const creditRed = creditIsExpense(line)
-                    const isFirst = lineIdx === 0
-                    const isLast = lineIdx === entry.lines.length - 1
-                    return (
-                      <tr
-                        key={`${entry.id}-${lineIdx}`}
-                        className={`hover:bg-accent/50 ${
-                          !isLast ? '' : 'border-b-2 border-border'
-                        }`}
-                      >
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">
-                          {isFirst ? formatDate(entry.date) : ''}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-foreground">
-                          {isFirst ? (
-                            <>
-                              {entry.description}
-                              {entry.status === 'void' && (
-                                <span className="ml-2 text-xs font-semibold text-destructive">
-                                  (Void)
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            ''
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-foreground">{line.accountName}</td>
-                        <td className="px-4 py-3 text-right font-mono text-sm">
-                          {line.debit > 0 ? (
+              entries.map((entry) => {
+                const runningBalance = runningBalanceByEntryId.get(entry.id) ?? 0
+                return (
+                  <React.Fragment key={entry.id}>
+                    {entry.lines.map((line, lineIdx) => {
+                      const debitGreen = debitIsIncome(line)
+                      const debitRed = debitIsExpense(line)
+                      const creditGreen = creditIsIncome(line)
+                      const creditRed = creditIsExpense(line)
+                      const isFirst = lineIdx === 0
+                      const isLast = lineIdx === entry.lines.length - 1
+                      return (
+                        <tr
+                          key={`${entry.id}-${lineIdx}`}
+                          className={`hover:bg-accent/50 ${
+                            !isLast ? '' : 'border-b-2 border-border'
+                          }`}
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">
+                            {isFirst ? formatDate(entry.date) : ''}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {isFirst ? (
+                              <>
+                                {entry.description}
+                                {entry.status === 'void' && (
+                                  <span className="ml-2 text-xs font-semibold text-destructive">
+                                    (Void)
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              ''
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">{line.accountName}</td>
+                          <td className="px-4 py-3 text-right font-mono text-sm">
+                            {line.debit > 0 ? (
+                              <span
+                                className={
+                                  debitGreen
+                                    ? 'font-medium text-success'
+                                    : debitRed
+                                      ? 'font-medium text-destructive'
+                                      : 'text-foreground'
+                                }
+                              >
+                                {debitGreen ? '+' : ''}
+                                {formatCurrency(line.debit, 'USD')}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-sm">
+                            {line.credit > 0 ? (
+                              <span
+                                className={
+                                  creditGreen
+                                    ? 'font-medium text-success'
+                                    : creditRed
+                                      ? 'font-medium text-destructive'
+                                      : 'text-foreground'
+                                }
+                              >
+                                {creditRed ? '−' : ''}
+                                {formatCurrency(line.credit, 'USD')}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-sm font-medium">
                             <span
                               className={
-                                debitGreen
-                                  ? 'font-medium text-success'
-                                  : debitRed
-                                    ? 'font-medium text-destructive'
-                                    : 'text-foreground'
+                                runningBalance >= 0 ? 'text-success' : 'text-destructive'
                               }
                             >
-                              {debitGreen ? '+' : ''}
-                              {formatCurrency(line.debit, 'USD')}
+                              {formatCurrency(runningBalance, 'USD')}
                             </span>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-sm">
-                          {line.credit > 0 ? (
-                            <span
-                              className={
-                                creditGreen
-                                  ? 'font-medium text-success'
-                                  : creditRed
-                                    ? 'font-medium text-destructive'
-                                    : 'text-foreground'
-                              }
-                            >
-                              {creditRed ? '−' : ''}
-                              {formatCurrency(line.credit, 'USD')}
-                            </span>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {isFirst && entry.status !== 'void' && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => onVoid(entry.id)}
-                            >
-                              Void
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </React.Fragment>
-              ))
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {isFirst && entry.status !== 'void' && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => onVoid(entry.id)}
+                              >
+                                Void
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </React.Fragment>
+                )
+              })
             )}
           </tbody>
         </table>
