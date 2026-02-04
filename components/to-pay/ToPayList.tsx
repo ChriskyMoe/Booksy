@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,73 +13,25 @@ import {
     Clock,
     Building2,
     Users,
-    ShoppingCart
+    ShoppingCart,
+    Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getPayments, markPaymentAsPaid, deletePayment, Payment } from "@/lib/actions/payments";
 
-type PaymentStatus = "upcoming" | "dueSoon" | "overdue";
+type PaymentStatus = "pending" | "dueSoon" | "overdue";
 
-interface PaymentItem {
-    id: string;
-    name: string;
-    category: string;
-    dueDate: string;
-    amount: number;
-    status: PaymentStatus;
-    icon: React.ElementType;
-}
-
-const mockPayments: PaymentItem[] = [
-    {
-        id: "1",
-        name: "Office Rent",
-        category: "Fixed Costs",
-        dueDate: "2026-02-05",
-        amount: 2500.00,
-        status: "dueSoon",
-        icon: Building2,
-    },
-    {
-        id: "2",
-        name: "Staff Salaries",
-        category: "Payroll",
-        dueDate: "2026-02-28",
-        amount: 15000.00,
-        status: "upcoming",
-        icon: Users,
-    },
-    {
-        id: "3",
-        name: "IT Infrastructure",
-        category: "Tech",
-        dueDate: "2026-01-30",
-        amount: 450.00,
-        status: "overdue",
-        icon: ShoppingCart,
-    },
-    {
-        id: "4",
-        name: "Cloud Hosting",
-        category: "Tech",
-        dueDate: "2026-02-12",
-        amount: 120.00,
-        status: "upcoming",
-        icon: ShoppingCart,
-    },
-    {
-        id: "5",
-        name: "Inventory Restock",
-        category: "Supplies",
-        dueDate: "2026-02-15",
-        amount: 1200.00,
-        status: "upcoming",
-        icon: ShoppingCart,
-    },
-];
+const categoryIcons: Record<string, React.ElementType> = {
+    "Rent": Building2,
+    "Utilities": Building2,
+    "Marketing": ShoppingCart,
+    "Payroll": Users,
+    "default": Calendar,
+};
 
 const statusConfig: Record<PaymentStatus, { label: string; className: string; icon: React.ElementType }> = {
-    upcoming: {
+    pending: {
         label: "Upcoming",
         className: "bg-primary/10 text-primary border-primary/20",
         icon: Calendar,
@@ -97,7 +49,64 @@ const statusConfig: Record<PaymentStatus, { label: string; className: string; ic
 };
 
 export function ToPayList() {
-    const [payments] = useState<PaymentItem[]>(mockPayments);
+    const [payments, setPayments] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function fetchPayments() {
+            try {
+                const result = await getPayments({ status: 'pending' });
+                if (result.data && !result.error) {
+                    const processedPayments = result.data.map(payment => {
+                        const today = new Date();
+                        const dueDate = new Date(payment.transaction_date);
+                        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                        let status: PaymentStatus = 'pending';
+                        if (daysUntilDue < 0) {
+                            status = 'overdue';
+                        } else if (daysUntilDue <= 7) {
+                            status = 'dueSoon';
+                        }
+
+                        return { ...payment, status };
+                    });
+                    setPayments(processedPayments);
+                } else if (result.error) {
+                    setError(result.error);
+                }
+            } catch (err) {
+                setError('Failed to fetch payments');
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPayments();
+    }, []);
+
+    const handleMarkAsPaid = async (id: string) => {
+        const result = await markPaymentAsPaid(id);
+        if (result.data) {
+            setPayments(prev => prev.filter(p => p.id !== id));
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure?")) return;
+        const result = await deletePayment(id);
+        if (!result.error) {
+            setPayments(prev => prev.filter(p => p.id !== id));
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     if (payments.length === 0) {
         return (
@@ -112,7 +121,6 @@ export function ToPayList() {
                             Keep your business running smoothly by tracking your upcoming expenses here.
                         </p>
                     </div>
-                    <Button>Add Your First Payment</Button>
                 </CardContent>
             </Card>
         );
@@ -121,8 +129,8 @@ export function ToPayList() {
     return (
         <div className="space-y-3">
             {payments.map((payment) => {
-                const status = statusConfig[payment.status];
-                const Icon = payment.icon;
+                const status = statusConfig[payment.status as PaymentStatus] || statusConfig.pending;
+                const Icon = categoryIcons[payment.category?.name] || categoryIcons.default;
 
                 return (
                     <div
@@ -130,7 +138,7 @@ export function ToPayList() {
                         className={cn(
                             "group relative flex items-center justify-between p-4 rounded-xl border bg-card transition-all duration-200 hover:shadow-md hover:border-primary/20",
                             payment.status === "overdue" && "border-destructive/30 bg-destructive/5",
-                            payment.status === "dueSoon" && "border-amber-200 bg-amber-50/50"
+                            payment.status === "dueSoon" && "border-warning/20 bg-warning/5"
                         )}
                     >
                         <div className="flex items-center gap-4 flex-1">
@@ -144,12 +152,12 @@ export function ToPayList() {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 items-center">
                                 <div className="md:col-span-1">
                                     <h4 className="font-semibold text-foreground">{payment.name}</h4>
-                                    <p className="text-xs text-muted-foreground">{payment.category}</p>
+                                    <p className="text-xs text-muted-foreground">{payment.category?.name || 'Uncategorized'}</p>
                                 </div>
 
                                 <div className="text-sm">
                                     <span className="text-muted-foreground">Due </span>
-                                    <span className="font-medium">{new Date(payment.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                    <span className="font-medium">{new Date(payment.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                 </div>
 
                                 <div>
@@ -160,20 +168,29 @@ export function ToPayList() {
 
                                 <div className="text-right pr-4">
                                     <span className="text-lg font-bold text-foreground">
-                                        ${payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success hover:bg-success/10" title="Mark as paid">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
+                                title="Mark as paid"
+                                onClick={() => handleMarkAsPaid(payment.id)}
+                            >
                                 <CheckCircle2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" title="Edit">
-                                <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="Delete">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                title="Delete"
+                                onClick={() => handleDelete(payment.id)}
+                            >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
