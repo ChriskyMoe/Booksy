@@ -26,6 +26,7 @@ export async function createInvoice(data: CreateInvoicePayload) {
     .insert({
       user_id: user.id,
       business_id: business.id,
+      type: data.type || "income",
       invoice_number: data.invoice_number,
       title: data.title,
       description: data.description,
@@ -122,6 +123,7 @@ export async function getInvoice(id: string) {
 // Get all invoices
 export async function getInvoices(filters?: {
   status?: string;
+  type?: "income" | "expense";
   search?: string;
   dateRange?: { from: string; to: string };
 }) {
@@ -145,6 +147,7 @@ export async function getInvoices(filters?: {
       payment_status,
       issue_date,
       due_date,
+      type,
       created_at
     `
     )
@@ -153,6 +156,10 @@ export async function getInvoices(filters?: {
 
   if (filters?.status) {
     query = query.eq("status", filters.status);
+  }
+
+  if (filters?.type) {
+    query = query.eq("type", filters.type);
   }
 
   if (filters?.search) {
@@ -197,6 +204,7 @@ export async function updateInvoice(
   const updateObj: any = {};
 
   const fieldsToUpdate = [
+    "type",
     "invoice_number",
     "title",
     "description",
@@ -338,7 +346,9 @@ export async function deleteInvoice(id: string) {
 }
 
 // Generate next invoice number
-export async function generateInvoiceNumber() {
+export async function generateInvoiceNumber(
+  type: "income" | "expense" = "income"
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -350,16 +360,33 @@ export async function generateInvoiceNumber() {
     .from("invoices")
     .select("invoice_number")
     .eq("user_id", user.id)
+    .eq("type", type)
     .order("created_at", { ascending: false })
     .limit(1);
 
+  const prefix = type === "expense" ? "BILL" : "INV";
+
   if (!data || data.length === 0) {
-    return "INV-001";
+    return `${prefix}-001`;
   }
 
-  const lastNumber = data[0].invoice_number;
-  const number = parseInt(lastNumber.split("-")[1]) + 1;
-  return `INV-${String(number).padStart(3, "0")}`;
+  const lastNumber = data[0].invoice_number || "";
+  const match = lastNumber.match(/^(.*?)(\d+)$/);
+
+  if (!match) {
+    return `${prefix}-001`;
+  }
+
+  const base = match[1];
+  const numeric = match[2];
+  const next = Number(numeric) + 1;
+  const padded = String(next).padStart(numeric.length, "0");
+
+  if (lastNumber.startsWith(prefix)) {
+    return `${base}${padded}`;
+  }
+
+  return `${prefix}-001`;
 }
 // Mark invoice as paid and create income transaction
 export async function markInvoiceAsPaid(
@@ -377,7 +404,7 @@ export async function markInvoiceAsPaid(
   const invoice = await getInvoice(invoiceId);
   if (!invoice) throw new Error("Invoice not found");
 
-  // Get or create "Sales" income category
+  // Get or create category based on invoice type
   const { data: business } = await supabase
     .from("businesses")
     .select("id")
@@ -386,22 +413,25 @@ export async function markInvoiceAsPaid(
 
   if (!business) throw new Error("Business not found");
 
+  const categoryName = invoice.type === "expense" ? "Bills" : "Sales";
+  const categoryType = invoice.type === "expense" ? "expense" : "income";
+
   let { data: category } = await supabase
     .from("categories")
     .select("id")
     .eq("business_id", business.id)
-    .eq("type", "income")
-    .eq("name", "Sales")
+    .eq("type", categoryType)
+    .eq("name", categoryName)
     .single();
 
-  // Create Sales category if it doesn't exist
+  // Create category if it doesn't exist
   if (!category) {
     const { data: newCategory, error: categoryError } = await supabase
       .from("categories")
       .insert({
         business_id: business.id,
-        name: "Sales",
-        type: "income",
+        name: categoryName,
+        type: categoryType,
         is_default: false,
       })
       .select()
@@ -411,7 +441,7 @@ export async function markInvoiceAsPaid(
     category = newCategory;
   }
 
-  // Create income transaction
+  // Create transaction
   const { error: transactionError } = await supabase
     .from("transactions")
     .insert({
@@ -423,7 +453,10 @@ export async function markInvoiceAsPaid(
       transaction_date: new Date().toISOString().split("T")[0],
       payment_method: paymentMethod,
       client_vendor: invoice.client_name,
-      notes: `Invoice #${invoice.invoice_number} - ${invoice.title}`,
+      notes:
+        invoice.type === "expense"
+          ? `Bill #${invoice.invoice_number} - ${invoice.title}`
+          : `Invoice #${invoice.invoice_number} - ${invoice.title}`,
     });
 
   if (transactionError) throw transactionError;

@@ -225,6 +225,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           business_id: businessId,
+          type: "income",
           invoice_number: invoiceNumber,
           client_name: extractedData.customer_name || "Unknown",
           client_email: extractedData.customer_email || null,

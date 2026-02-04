@@ -21,6 +21,7 @@ export interface InvoicePayment {
 
 export interface Invoice {
   id: string;
+  type: "income" | "expense";
   invoice_number: string;
   title: string;
   description?: string;
@@ -59,6 +60,7 @@ export interface Invoice {
 }
 
 export interface CreateInvoicePayload {
+  type: "income" | "expense";
   invoice_number: string;
   title: string;
   description?: string;

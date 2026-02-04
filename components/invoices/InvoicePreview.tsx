@@ -41,6 +41,14 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
+              <span className="text-gray-600">Type:</span>
+              <span className="font-medium text-gray-900">
+                {invoice.type === "expense"
+                  ? "Expense (Payable)"
+                  : "Income (Receivable)"}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-gray-600">Invoice Number:</span>
               <span className="font-medium text-gray-900">
                 {invoice.invoice_number}
@@ -67,7 +75,9 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
 
         <div>
           <h3 className="text-sm font-semibold text-gray-600 mb-4">
-            Client Information
+            {invoice.type === "expense"
+              ? "Vendor Information"
+              : "Client Information"}
           </h3>
           <div className="space-y-2 text-sm">
             <div>

@@ -115,7 +115,10 @@ export default function InvoiceList({ invoices, loading }: InvoiceListProps) {
                 Invoice
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                Client
+                Client/Vendor
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                Type
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                 Amount
@@ -147,6 +150,17 @@ export default function InvoiceList({ invoices, loading }: InvoiceListProps) {
                 </td>
                 <td className="px-6 py-4 text-gray-700">
                   {invoice.client_name}
+                </td>
+                <td className="px-6 py-4">
+                  <Badge
+                    className={
+                      invoice.type === "expense"
+                        ? "bg-orange-100 text-orange-800"
+                        : "bg-emerald-100 text-emerald-800"
+                    }
+                  >
+                    {invoice.type === "expense" ? "Expense" : "Income"}
+                  </Badge>
                 </td>
                 <td className="px-6 py-4 font-semibold text-gray-900">
                   ${invoice.total_amount.toFixed(2)}

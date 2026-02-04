@@ -160,37 +160,48 @@ export async function getHealthDashboardData() {
 
   const currentCash = totalIncome - totalExpenses;
 
-  // Fetch upcoming expenses (next 30 days from today)
+  // Fetch payables from expense invoices (exclude paid)
   const today = new Date();
   const thirtyDaysLater = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   const todayStr = today.toISOString().split("T")[0];
   const thirtyDaysStr = thirtyDaysLater.toISOString().split("T")[0];
 
-  const { data: upcomingExpensesData } = await supabase
-    .from("transactions")
-    .select("*, category:categories(type, name)")
+  const { data: expenseInvoicesData } = await supabase
+    .from("invoices")
+    .select("*")
     .eq("business_id", business.id)
-    .eq("category.type", "expense")
-    .gte("transaction_date", todayStr)
-    .lte("transaction_date", thirtyDaysStr)
-    .order("transaction_date", { ascending: true })
-    .limit(3);
+    .eq("type", "expense")
+    .order("due_date", { ascending: true });
 
-  const expenses = (upcomingExpensesData || []).map((exp: any) => ({
-    name: exp.category?.name || exp.client_vendor || "Expense",
-    dueDate: new Date(exp.transaction_date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-    amount: Number(exp.base_amount),
-  }));
+  const unpaidExpenseInvoices = (expenseInvoicesData || []).filter(
+    (invoice: any) => invoice.status !== "paid"
+  );
+
+  const expenses = unpaidExpenseInvoices
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+    )
+    .slice(0, 3)
+    .map((invoice: any) => ({
+      name: invoice.client_name || "Payable",
+      dueDate: new Date(invoice.due_date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      amount: Number(invoice.total_amount),
+      isOverdue:
+        invoice.status === "overdue" || new Date(invoice.due_date) < today,
+      dueDateRaw: invoice.due_date,
+    }));
 
   // Fetch receivables from invoices (exclude paid)
   const { data: invoicesData } = await supabase
     .from("invoices")
     .select("*")
     .eq("business_id", business.id)
+    .eq("type", "income")
     .order("due_date", { ascending: true });
 
   const unpaidInvoices = (invoicesData || []).filter(
@@ -297,7 +308,10 @@ export async function getHealthDashboardData() {
     (sum, item) => sum + item.amount,
     0
   );
-  const totalToPay = expenses.reduce((sum, item) => sum + item.amount, 0);
+  const totalToPay = unpaidExpenseInvoices.reduce(
+    (sum: number, invoice: any) => sum + Number(invoice.total_amount),
+    0
+  );
 
   // Remaining balance: current cash + to receive - to pay
   const remainingBalance = currentCash + totalReceivables - totalToPay;

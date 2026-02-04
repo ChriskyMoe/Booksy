@@ -5,6 +5,7 @@ CREATE TABLE invoices (
   business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
 
   -- Basic Info
+  type TEXT NOT NULL DEFAULT 'income', -- income (receivable) or expense (payable)
   invoice_number TEXT NOT NULL UNIQUE,
   title TEXT DEFAULT 'Invoice',
   description TEXT,
@@ -44,11 +45,13 @@ CREATE TABLE invoices (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT valid_status CHECK (status IN ('draft', 'sent', 'viewed', 'paid', 'overdue', 'cancelled')),
-  CONSTRAINT valid_payment_status CHECK (payment_status IN ('unpaid', 'partial', 'paid'))
+  CONSTRAINT valid_payment_status CHECK (payment_status IN ('unpaid', 'partial', 'paid')),
+  CONSTRAINT valid_invoice_type CHECK (type IN ('income', 'expense'))
 );
 
 CREATE INDEX idx_invoices_user_id ON invoices(user_id);
 CREATE INDEX idx_invoices_status ON invoices(status);
+CREATE INDEX idx_invoices_type ON invoices(type);
 CREATE INDEX idx_invoices_issue_date ON invoices(issue_date);
 CREATE INDEX idx_invoices_catalog_item_ids ON invoices USING GIN (invoice_catalog_item_ids);
 

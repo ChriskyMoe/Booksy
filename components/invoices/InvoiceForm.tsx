@@ -6,7 +6,11 @@ import {
   InvoiceLineItem,
   InvoiceItemWithDetails,
 } from "@/types/invoice";
-import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
+import {
+  createInvoice,
+  updateInvoice,
+  generateInvoiceNumber,
+} from "@/lib/actions/invoices";
 import {
   getInvoiceItems,
   InvoiceItemCatalog,
@@ -32,12 +36,14 @@ interface InvoiceFormProps {
 export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
   const [loading, setLoading] = useState(false);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItemCatalog[]>([]);
+  const [autoNumber, setAutoNumber] = useState(!invoice);
 
   // Initialize items with catalog details for display (use invoice.items if available)
   const [items, setItems] = useState<InvoiceItemWithDetails[]>(
     invoice?.items || []
   );
   const [formData, setFormData] = useState({
+    type: invoice?.type || "income",
     invoice_number: invoice?.invoice_number || "",
     title: invoice?.title || "Invoice",
     client_name: invoice?.client_name || "",
@@ -55,6 +61,20 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
     loadInvoiceItems();
   }, []);
 
+  useEffect(() => {
+    const ensureInvoiceNumber = async () => {
+      if (invoice || !autoNumber) return;
+      try {
+        const number = await generateInvoiceNumber(formData.type);
+        setFormData((prev) => ({ ...prev, invoice_number: number }));
+      } catch (error) {
+        console.error("Error generating invoice number:", error);
+      }
+    };
+
+    ensureInvoiceNumber();
+  }, [formData.type, invoice, autoNumber]);
+
   const loadInvoiceItems = async () => {
     const result = await getInvoiceItems();
     if (result.data) {
@@ -65,6 +85,7 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
   const taxAmount = (subtotal * formData.tax_rate) / 100;
   const total = subtotal + taxAmount;
+  const partyLabel = formData.type === "expense" ? "Vendor" : "Client";
 
   const handleAddItem = () => {
     setItems([
@@ -148,12 +169,12 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Client Information */}
+      {/* Client/Vendor Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Client Information</h3>
+        <h3 className="text-lg font-semibold">{partyLabel} Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Client Name *</Label>
+            <Label>{partyLabel} Name *</Label>
             <Input
               value={formData.client_name}
               onChange={(e) =>
@@ -187,14 +208,35 @@ export default function InvoiceForm({ invoice, onSubmit }: InvoiceFormProps) {
       {/* Invoice Details */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Invoice Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <Label>Type *</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  type: value as "income" | "expense",
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="income">Income (Receivable)</SelectItem>
+                <SelectItem value="expense">Expense (Payable)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label>Invoice Number *</Label>
             <Input
               value={formData.invoice_number}
-              onChange={(e) =>
-                setFormData({ ...formData, invoice_number: e.target.value })
-              }
+              onChange={(e) => {
+                if (!invoice) setAutoNumber(false);
+                setFormData({ ...formData, invoice_number: e.target.value });
+              }}
               required
             />
           </div>

@@ -80,6 +80,11 @@ export default function InvoiceDetailClient({
           <p className="text-gray-600 text-sm mt-1">
             Invoice #{invoice.invoice_number}
           </p>
+          <p className="text-gray-500 text-xs mt-1">
+            {invoice.type === "expense"
+              ? "Expense (Payable)"
+              : "Income (Receivable)"}
+          </p>
         </div>
         <div className="flex gap-3 items-center">
           <select
