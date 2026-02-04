@@ -49,9 +49,12 @@ export async function getDashboardData(period?: {
     return { data: null, error: error.message };
   }
 
-  const typedTransactions = (transactions || []) as Transaction[];
+  const allRows = (transactions || []) as Transaction[];
+  const typedTransactions = allRows.filter(
+    (t: any) => (t.status ?? "posted") !== "void"
+  );
 
-  // Calculate metrics
+  // Calculate metrics (exclude voided)
   const income = typedTransactions
     .filter((t) => t.category?.type === "income")
     .reduce((sum, t) => sum + Number(t.base_amount), 0);
@@ -62,13 +65,15 @@ export async function getDashboardData(period?: {
 
   const profit = income - expenses;
 
-  // Calculate cash balance (all transactions)
+  // Calculate cash balance (exclude voided when status column exists)
   const { data: allTransactionsData } = await supabase
     .from("transactions")
     .select("base_amount, category:categories(type)")
     .eq("business_id", business.id);
 
-  const allTransactions = (allTransactionsData || []) as any[];
+  const allTransactions = ((allTransactionsData || []) as any[]).filter(
+    (t: any) => (t.status ?? "posted") !== "void"
+  );
 
   const cashBalance = allTransactions.reduce((sum, t) => {
     const amount = Number(t.base_amount);
@@ -124,7 +129,9 @@ export async function getIncomeExpenseComparisonData() {
 
   if (error) return { data: null, error: error.message };
 
-  const transactions = (transactionsData || []) as any[];
+  const transactions = ((transactionsData || []) as any[]).filter(
+    (t: any) => (t.status ?? "posted") !== "void"
+  );
   const monthlyMap = new Map<string, { income: number; expenses: number }>();
 
   transactions.forEach((t) => {
@@ -204,7 +211,9 @@ export async function getIncomeExpenseChartData(): Promise<{
     return { error: error.message };
   }
 
-  const transactions = (transactionsData || []) as any[];
+  const transactions = ((transactionsData || []) as any[]).filter(
+    (t: any) => (t.status ?? "posted") !== "void"
+  );
   const monthlyDataMap = new Map<
     string,
     { income: number; expenses: number }
@@ -285,7 +294,9 @@ export async function getExpenseBreakdownChartData(period?: {
     return { error: error.message };
   }
 
-  const transactions = (transactionsData || []) as any[];
+  const transactions = ((transactionsData || []) as any[]).filter(
+    (t: any) => (t.status ?? "posted") !== "void"
+  );
   const expenseBreakdownMap = new Map<string, number>();
 
   transactions.forEach((transaction) => {

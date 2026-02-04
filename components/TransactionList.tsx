@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { getTransactions } from "@/lib/actions/transactions";
 import TransactionItem from "./TransactionItem";
 import TransactionSearchFilter from "./TransactionSearchFilter";
@@ -15,6 +15,7 @@ interface TransactionListProps {
     payment_method: string;
     base_amount: number;
     currency: string;
+    status?: string;
   }>;
 }
 
@@ -28,6 +29,13 @@ export default function TransactionList({
   >("all");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [transactions, setTransactions] = useState(initialTransactions || []);
+
+  // Sync list when parent re-fetches (e.g. after void/delete)
+  useEffect(() => {
+    if (initialTransactions != null) {
+      setTransactions(initialTransactions);
+    }
+  }, [initialTransactions]);
 
   // Extract unique categories and payment methods
   const categories = useMemo(() => {

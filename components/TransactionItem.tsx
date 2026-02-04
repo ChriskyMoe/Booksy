@@ -1,7 +1,7 @@
 'use client'
 
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { deleteTransaction } from '@/lib/actions/transactions'
+import { voidTransaction } from '@/lib/actions/transactions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -16,25 +16,35 @@ interface TransactionItemProps {
     payment_method: string
     base_amount: number
     currency: string
+    status?: string
   }
 }
 
 export default function TransactionItem({ transaction }: TransactionItemProps) {
   const router = useRouter()
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [isVoiding, setIsVoiding] = useState(false)
+  const isVoided = transaction.status === 'void'
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this transaction?')) {
+  const handleVoid = async () => {
+    if (
+      !confirm(
+        'Void this transaction? It will show as voided in the list and in the Ledger. Balance will be corrected; history remains.'
+      )
+    ) {
       return
     }
-
-    setIsDeleting(true)
-    await deleteTransaction(transaction.id)
-    router.refresh()
+    setIsVoiding(true)
+    const result = await voidTransaction(transaction.id)
+    if (result.error) {
+      alert(result.error)
+      setIsVoiding(false)
+    } else {
+      router.refresh()
+    }
   }
 
   return (
-    <tr className={isDeleting ? 'opacity-50' : ''}>
+    <tr className={isVoiding ? 'opacity-50' : ''}>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
         {formatDate(transaction.transaction_date)}
       </td>
@@ -49,6 +59,9 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
         >
           {transaction.category?.name || 'Uncategorized'}
         </Badge>
+        {isVoided && (
+          <span className="ml-2 text-xs font-semibold text-destructive">(Void)</span>
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
         {transaction.client_vendor || '-'}
@@ -65,15 +78,17 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
         {formatCurrency(transaction.base_amount, transaction.currency)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        <Button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-          Delete
-        </Button>
+        {!isVoided && (
+          <Button
+            onClick={handleVoid}
+            disabled={isVoiding}
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            Void
+          </Button>
+        )}
       </td>
     </tr>
   )
