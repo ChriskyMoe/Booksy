@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, extractedData, fileName, receiptOrigin } = body;
+    const { type, extractedData, fileName, receiptOrigin, invoiceType } = body;
 
     if (!type || !extractedData) {
       return NextResponse.json(
@@ -218,6 +218,10 @@ export async function POST(request: NextRequest) {
         }
       }
     } else if (type === "invoice") {
+      const resolvedInvoiceType =
+        invoiceType === "expense" || invoiceType === "income"
+          ? invoiceType
+          : "income";
       // Create invoice
       const invoiceNumber = `INV-${Date.now()}`;
       const { data: invoice, error: invoiceError } = await supabase
@@ -225,7 +229,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           business_id: businessId,
-          type: "income",
+          type: resolvedInvoiceType,
           invoice_number: invoiceNumber,
           client_name: extractedData.customer_name || "Unknown",
           client_email: extractedData.customer_email || null,

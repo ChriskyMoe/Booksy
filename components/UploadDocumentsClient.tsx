@@ -38,6 +38,9 @@ export default function UploadDocumentsClient({
   const [selectedType, setSelectedType] = useState<"receipt" | "invoice">(
     "receipt"
   );
+  const [invoiceType, setInvoiceType] = useState<"income" | "expense">(
+    "income"
+  );
   const [uploads, setUploads] = useState<UploadResult[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [viewingData, setViewingData] = useState<UploadResult | null>(null);
@@ -159,6 +162,42 @@ export default function UploadDocumentsClient({
     }
   };
 
+  const renderInvoiceTypeSelect = () => (
+    <div className="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+      <p className="text-sm font-semibold mb-3 text-emerald-900 dark:text-emerald-100">
+        Is this an income invoice or an expense (bill) to pay?
+      </p>
+      <div className="flex gap-4 flex-wrap">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="radio"
+            name="invoiceType"
+            value="income"
+            checked={invoiceType === "income"}
+            onChange={() => setInvoiceType("income")}
+            className="w-4 h-4"
+          />
+          <span className="text-sm font-medium">Income (Receivable)</span>
+          <span className="text-xs text-muted-foreground">
+            (Customer owes me)
+          </span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="radio"
+            name="invoiceType"
+            value="expense"
+            checked={invoiceType === "expense"}
+            onChange={() => setInvoiceType("expense")}
+            className="w-4 h-4"
+          />
+          <span className="text-sm font-medium">Expense (Payable)</span>
+          <span className="text-xs text-muted-foreground">(I need to pay)</span>
+        </label>
+      </div>
+    </div>
+  );
+
   const closeModal = () => {
     setViewingData(null);
     setShowRawData(false);
@@ -277,6 +316,7 @@ export default function UploadDocumentsClient({
           <div className="text-sm text-muted-foreground">Customer invoices</div>
         </button>
       </div>
+      {selectedType === "invoice" && renderInvoiceTypeSelect()}
 
       {/* Upload Area */}
       <div
