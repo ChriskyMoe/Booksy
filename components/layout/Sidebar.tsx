@@ -14,6 +14,7 @@ import {
   FileText,
   Activity,
   Upload,
+  CreditCard,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Transactions", href: "/transactions", icon: Receipt },
   { name: "Invoices", href: "/invoices", icon: FileText },
+  { name: "To Pay", href: "/to-pay", icon: CreditCard },
   { name: "Business Health", href: "/business-health", icon: Activity },
   { name: "Upload Documents", href: "/upload-documents", icon: Upload },
   { name: "Ledger", href: "/ledger", icon: BookOpen },
