@@ -186,18 +186,20 @@ export async function getHealthDashboardData() {
     amount: Number(exp.base_amount),
   }));
 
-  // Fetch receivables from invoices (status: sent or overdue)
+  // Fetch receivables from invoices (exclude paid)
   const { data: invoicesData } = await supabase
     .from("invoices")
     .select("*")
     .eq("business_id", business.id)
     .order("due_date", { ascending: true });
 
-  let receivables = (invoicesData || []).map((invoice: any) => {
+  const unpaidInvoices = (invoicesData || []).filter(
+    (invoice: any) => invoice.status !== "paid"
+  );
+
+  let receivables = unpaidInvoices.map((invoice: any) => {
     const dueDate = new Date(invoice.due_date);
-    const isOverdue =
-      invoice.status === "overdue" ||
-      (dueDate < today && invoice.status !== "paid");
+    const isOverdue = invoice.status === "overdue" || dueDate < today;
     return {
       name: invoice.client_name,
       dueDate: dueDate.toLocaleDateString("en-US", {
@@ -212,12 +214,12 @@ export async function getHealthDashboardData() {
   });
 
   // Check for invoices due within 3 days and trigger webhook immediately
-  const invoicesDueSoon = (invoicesData || []).filter((invoice: any) => {
+  const invoicesDueSoon = unpaidInvoices.filter((invoice: any) => {
     const dueDate = new Date(invoice.due_date);
     const daysDiff = Math.ceil(
       (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     );
-    return invoice.status !== "paid" && daysDiff >= 0 && daysDiff <= 3;
+    return daysDiff >= 0 && daysDiff <= 3;
   });
 
   if (invoicesDueSoon.length > 0) {
@@ -253,9 +255,9 @@ export async function getHealthDashboardData() {
   }
 
   // Check for overdue invoices and trigger webhook immediately
-  const overdueInvoices = (invoicesData || []).filter((invoice: any) => {
+  const overdueInvoices = unpaidInvoices.filter((invoice: any) => {
     const dueDate = new Date(invoice.due_date);
-    return invoice.status !== "paid" && dueDate < today;
+    return dueDate < today;
   });
 
   if (overdueInvoices.length > 0) {

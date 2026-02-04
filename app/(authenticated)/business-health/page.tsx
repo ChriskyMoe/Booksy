@@ -5,7 +5,6 @@ import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import { HealthHeader } from "@/components/health/HealthHeader";
 import { PrimaryHealthCard } from "@/components/health/PrimaryHealthCard";
 import { ActionSummaryCards } from "@/components/health/ActionSummaryCards";
-import { PlannedSpending } from "@/components/health/PlannedSpending";
 
 export default async function BusinessHealthPage() {
   const { data: business, error: businessError } = await getBusiness();
@@ -22,28 +21,6 @@ export default async function BusinessHealthPage() {
   }
 
   const { healthData, expenses, receivables, alerts } = healthResult;
-
-  // Placeholder for planned items - can be extended to fetch from database
-  const plannedItems = [
-    {
-      id: "1",
-      name: "New Laptop for Designer",
-      estimatedCost: 2500,
-      isSafe: healthData.safeCash >= 2500,
-    },
-    {
-      id: "2",
-      name: "Office Furniture Upgrade",
-      estimatedCost: 8000,
-      isSafe: healthData.safeCash >= 8000,
-    },
-    {
-      id: "3",
-      name: "Marketing Campaign",
-      estimatedCost: 5000,
-      isSafe: healthData.safeCash >= 5000,
-    },
-  ];
 
   return (
     <AuthenticatedLayout
@@ -67,8 +44,6 @@ export default async function BusinessHealthPage() {
           receivables={receivables}
           currency={currency}
         />
-
-        <PlannedSpending items={plannedItems} currency={currency} />
       </div>
     </AuthenticatedLayout>
   );
