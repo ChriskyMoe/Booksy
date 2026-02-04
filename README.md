@@ -19,12 +19,11 @@ Booksy is a modern Next.js application that helps small businesses and freelance
 - **Multi-Currency** – record transactions in multiple currencies
 - **Currency Converter** – currency tools for quick conversion
 
-### Invoices & Payables
+### Invoices & Payments
 
 - **Invoices** – create, edit, preview, and track invoice status
 - **Invoice Items** – catalog of reusable line items
 - **Payments** – record payments and update invoice status
-- **To-Pay** – payables list, calendar, and quick actions
 
 ### Receipts & OCR
 
@@ -123,7 +122,6 @@ Booksy/
 │   │   ├── invoices/
 │   │   ├── invoice-items/
 │   │   ├── receipts/
-│   │   ├── to-pay/
 │   │   └── upload-documents/
 │   ├── api/                      # Route handlers
 │   │   ├── ai-analysis/
@@ -142,7 +140,6 @@ Booksy/
 │   ├── invoices/
 │   ├── landing/
 │   ├── layout/
-│   ├── to-pay/
 │   └── ui/
 ├── lib/                          # Utilities and services
 │   ├── actions/

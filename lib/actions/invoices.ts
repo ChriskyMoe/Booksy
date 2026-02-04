@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createTransaction } from "@/lib/actions/transactions";
 import { Invoice, CreateInvoicePayload } from "@/types/invoice";
 
 // Create invoice
@@ -441,25 +442,20 @@ export async function markInvoiceAsPaid(
     category = newCategory;
   }
 
-  // Create transaction
-  const { error: transactionError } = await supabase
-    .from("transactions")
-    .insert({
-      business_id: business.id,
-      category_id: category.id,
-      amount: invoice.total_amount,
-      currency: invoice.currency,
-      base_amount: invoice.total_amount, // Assuming same currency for now
-      transaction_date: new Date().toISOString().split("T")[0],
-      payment_method: paymentMethod,
-      client_vendor: invoice.client_name,
-      notes:
-        invoice.type === "expense"
-          ? `Bill #${invoice.invoice_number} - ${invoice.title}`
-          : `Invoice #${invoice.invoice_number} - ${invoice.title}`,
-    });
+  const txResult = await createTransaction({
+    category_id: category.id,
+    amount: invoice.total_amount,
+    currency: invoice.currency,
+    transaction_date: new Date().toISOString().split("T")[0],
+    payment_method: paymentMethod,
+    client_vendor: invoice.client_name,
+    notes:
+      invoice.type === "expense"
+        ? `Bill #${invoice.invoice_number} - ${invoice.title}`
+        : `Invoice #${invoice.invoice_number} - ${invoice.title}`,
+  });
 
-  if (transactionError) throw transactionError;
+  if (txResult.error) throw new Error(txResult.error);
 
   // Update invoice status to paid
   const { data, error } = await supabase

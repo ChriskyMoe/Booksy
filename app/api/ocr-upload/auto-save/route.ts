@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createTransaction } from "@/lib/actions/transactions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -186,35 +187,27 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Create transaction
+      // Create transaction (and ledger) using shared action
       if (categoryId) {
-        const { data: transaction, error: transactionError } = await supabase
-          .from("transactions")
-          .insert({
-            business_id: businessId,
-            category_id: categoryId,
-            amount: extractedData.total_amount || 0,
-            currency: normalizeCurrency(extractedData.currency),
-            base_amount: extractedData.total_amount || 0,
-            transaction_date:
-              extractedData.date || new Date().toISOString().split("T")[0],
-            payment_method: normalizePaymentMethod(
-              extractedData.payment_method
-            ),
-            client_vendor: extractedData.merchant_name || "Unknown",
-            notes: `Receipt from ${extractedData.merchant_name || "Unknown"}. File: ${fileName || "unknown"}`,
-          })
-          .select()
-          .single();
+        const txResult = await createTransaction({
+          category_id: categoryId,
+          amount: extractedData.total_amount || 0,
+          currency: normalizeCurrency(extractedData.currency),
+          transaction_date:
+            extractedData.date || new Date().toISOString().split("T")[0],
+          payment_method: normalizePaymentMethod(extractedData.payment_method),
+          client_vendor: extractedData.merchant_name || "Unknown",
+          notes: `Receipt from ${extractedData.merchant_name || "Unknown"}`,
+        });
 
-        if (!transactionError && transaction) {
+        if (!txResult.error && txResult.data) {
           savedRecord = {
             type: "transaction",
-            id: transaction.id,
-            data: transaction,
+            id: txResult.data.id,
+            data: txResult.data,
           };
-        } else if (transactionError) {
-          console.error("Transaction creation error:", transactionError);
+        } else if (txResult.error) {
+          console.error("Transaction creation error:", txResult.error);
         }
       }
     } else if (type === "invoice") {

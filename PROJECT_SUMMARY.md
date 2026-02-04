@@ -25,7 +25,6 @@ Booksy/
 │   │   ├── invoices/
 │   │   ├── invoice-items/
 │   │   ├── receipts/
-│   │   ├── to-pay/
 │   │   └── upload-documents/
 │   └── api/                      # Route handlers
 │       ├── ai-analysis/
@@ -38,7 +37,6 @@ Booksy/
 │   ├── health/
 │   ├── landing/
 │   ├── layout/
-│   ├── to-pay/
 │   └── ui/
 ├── lib/
 │   ├── actions/                  # Server actions
@@ -107,11 +105,6 @@ Booksy/
 - [x] Document upload flow
 - [x] OCR pipeline endpoints
 - [x] Receipt ingestion screens
-
-### ✅ To-Pay (Accounts Payable)
-
-- [x] Payables list and quick actions
-- [x] Payment calendar view
 
 ### ✅ Business Health
 
