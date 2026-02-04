@@ -68,7 +68,7 @@ export async function getTransactions(filters?: {
 export async function getTotalCashBalance() {
   const result = await getTransactions()
   if (result.error) return { error: result.error, data: null }
-  const list = result.data || []
+  const list = (result.data || []).filter((t: any) => t.status !== 'void')
   let total = 0
   list.forEach((t: any) => {
     const amount = Number(t.base_amount) ?? 0
@@ -133,7 +133,7 @@ export async function createTransaction(transaction: {
 
   // Create a ledger row (journal entry) so the Ledger shows this transaction
   const category = data?.category as { name: string; type: 'income' | 'expense' } | null
-  if (category?.name != null && category?.type != null) {
+  if (category?.name != null && category?.type != null && data?.id) {
     const journalResult = await createJournalEntryFromTransaction({
       business_id: business.id,
       transaction_date: transaction.transaction_date,
@@ -144,8 +144,12 @@ export async function createTransaction(transaction: {
     })
     if (journalResult.error) {
       console.error('Ledger sync failed:', journalResult.error)
-      // Transaction is already saved; return success so user sees their transaction
-      // Ledger may be missing this row until fixed
+    } else if (journalResult.data?.id) {
+      // Link transaction to journal entry so voiding updates both
+      await (supabase as any)
+        .from('transactions')
+        .update({ journal_entry_id: journalResult.data.id })
+        .eq('id', data.id)
     }
   }
 
@@ -221,21 +225,102 @@ export async function updateTransaction(
   return { data }
 }
 
+/**
+ * Void a transaction (Option A: reverse): mark as voided and void the ledger entry.
+ * Transaction and ledger row both show as voided; balance is corrected, history remains.
+ */
+export async function voidTransaction(transactionId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'Not authenticated' }
+
+  const id = typeof transactionId === 'string' ? transactionId.trim() : ''
+  if (!id) return { error: 'Transaction ID is required' }
+
+  // Get business so we scope the lookup (same as getTransactions)
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!business) return { error: 'Business not found' }
+
+  // Select only columns that exist (avoid "column does not exist" before migration)
+  const { data: row, error: fetchError } = await supabase
+    .from('transactions')
+    .select('id, business_id, transaction_date, base_amount, notes, client_vendor')
+    .eq('id', id)
+    .eq('business_id', business.id)
+    .single()
+
+  if (fetchError || !row) {
+    const reason = fetchError?.message ?? (row ? '' : 'No row returned')
+    return { error: reason ? `Transaction not found: ${reason}` : 'Transaction not found' }
+  }
+
+  const rowAny = row as { journal_entry_id?: string; status?: string }
+  if (rowAny.status === 'void') return { error: 'Transaction is already voided' }
+
+  // Void the ledger entry so it shows (Void) in the Ledger
+  const { voidJournalEntry, getJournalEntries } = await import('@/lib/actions/journal')
+  let journalEntryId = rowAny.journal_entry_id
+
+  if (!journalEntryId) {
+    // Link not stored (migration not run): find journal entry by matching transaction
+    const journalResult = await getJournalEntries()
+    if (journalResult.data?.length) {
+      const description = row.notes || row.client_vendor || 'Transaction'
+      const match = journalResult.data.find(
+        (e: any) =>
+          e.business_id === row.business_id &&
+          e.transaction_date === row.transaction_date &&
+          (e.description || '').trim() === (description || '').trim() &&
+          e.status !== 'void' &&
+          (e.journal_lines || []).some(
+            (l: any) => Number(l.amount) === Number(row.base_amount)
+          )
+      )
+      if (match) journalEntryId = match.id
+    }
+  }
+
+  if (journalEntryId) {
+    const voidResult = await voidJournalEntry(journalEntryId)
+    if (voidResult.error) return { error: voidResult.error }
+  }
+
+  // Mark transaction as voided (if status column exists); else hard delete so it disappears
+  const { error: updateError } = await (supabase as any)
+    .from('transactions')
+    .update({ status: 'void' })
+    .eq('id', id)
+
+  if (updateError) {
+    // status column may not exist (migration not run): hard delete so the row is removed
+    const { error: deleteError } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+    if (deleteError) return { error: deleteError.message }
+  }
+
+  return { success: true }
+}
+
+/** Hard delete (kept for compatibility). Prefer voidTransaction so ledger stays in sync. */
 export async function deleteTransaction(id: string) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
+  if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase.from('transactions').delete().eq('id', id)
-
-  if (error) {
-    return { error: error.message }
-  }
-
+  if (error) return { error: error.message }
   return { success: true }
 }
